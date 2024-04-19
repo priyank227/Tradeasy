@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:tradeasy/home_page.dart';
 import 'package:tradeasy/wholesaler_home.dart';
-import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -22,6 +24,9 @@ class _LoginPageState extends State<LoginPage>
   final _signInFormKey = GlobalKey<FormState>();
   final _signUpFormKey = GlobalKey<FormState>();
   final _wholesalerFormKey = GlobalKey<FormState>();
+
+  FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
@@ -131,12 +136,20 @@ class _LoginPageState extends State<LoginPage>
           ),
           SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (_signInFormKey.currentState!.validate()) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => AgentHomePage()),
-                );
+                try {
+                  await _auth.signInWithEmailAndPassword(
+                      email: _agentEmailController.text,
+                      password: _agentPasswordController.text);
+                  // Navigate to Agent Home Page
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => AgentHomePage()),
+                  );
+                } catch (e) {
+                  print("Failed to sign in: $e");
+                }
               }
             },
             style: ElevatedButton.styleFrom(
@@ -214,9 +227,31 @@ class _LoginPageState extends State<LoginPage>
           ),
           SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (_signUpFormKey.currentState!.validate()) {
-                // Form is valid, proceed with sign-up
+                try {
+                  UserCredential userCredential = await _auth
+                      .createUserWithEmailAndPassword(
+                          email: _agentEmailController.text,
+                          password: _agentPasswordController.text);
+                  // Store user data in Firestore
+                  await _firestore.collection('agents').doc(userCredential.user!.uid).set({
+                    'email': _agentEmailController.text,
+                    // Add more user data fields if needed
+                  });
+                  // Navigate to Agent Home Page
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => AgentHomePage()),
+                  );
+                } catch (e) {
+                  print("Failed to sign up: $e");
+                }
+              } else {
+                // Navigate to the sign-in form
+                setState(() {
+                  _isSignIn = true;
+                });
               }
             },
             style: ElevatedButton.styleFrom(

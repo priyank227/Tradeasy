@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "427977767301",
+    "project_id": "tradeasy-aaf5a",
+    "storage_bucket": "tradeasy-aaf5a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:427977767301:android:92a8d1194ccc22de33ecec",
+        "android_client_info": {
+          "package_name": "com.example.tradeasy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZ1HQsMwi8Y6Ugm7DF3l0xlrGEUvXLwa0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
