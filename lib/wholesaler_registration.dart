@@ -26,7 +26,7 @@ class _WholesalerRegistrationPageState
     return Scaffold(
       appBar: AppBar(
         title: Text('Wholesaler Registration'),
-        backgroundColor: Color(0xff700f68),
+        backgroundColor: Color.fromARGB(255, 22, 82, 8),
       ),
       backgroundColor: Colors.white,
       body: Padding(
@@ -116,7 +116,7 @@ class _WholesalerRegistrationPageState
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xff700f68),
+                    backgroundColor: Color.fromARGB(255, 22, 82, 8),
                     padding: EdgeInsets.symmetric(vertical: 15),
                   ),
                   child: Text(

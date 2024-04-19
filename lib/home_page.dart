@@ -1,7 +1,7 @@
+import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:email_validator/email_validator.dart';
-import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:excel/excel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -34,51 +34,63 @@ class _AgentHomePageState extends State<AgentHomePage> {
   }
 
   void _logout() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Confirm Logout"),
-          content: Text("Are you sure you want to logout?"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("No"),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/',
-                  (route) => false,
-                );
-              },
-              child: Text("Yes"),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Confirm Logout"),
+        content: Text("Are you sure you want to logout?"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text("No"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pushReplacementNamed(context, '/'); // Navigate directly to the login page
+            },
+            child: Text("Yes"),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_appBarTitles[_selectedIndex]),
-        backgroundColor: Color(0xff700f68),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: _logout,
+      body: Stack(
+        children: [
+          // Background Image
+          Positioned.fill(
+            child: Image.asset(
+              '../Assets/background.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Center(
+            child: _selectedIndex == 0
+                ? _buildHomePage()
+                : (_selectedIndex == 1
+                    ? _buildDataPage()
+                    : _widgetOptions.elementAt(_selectedIndex)),
+          ),
+          // Logout button
+          Positioned(
+            top: 20,
+            right: 20,
+            child: IconButton(
+              icon: Icon(Icons.logout),
+              onPressed: _logout,
+              color: Color.fromARGB(255, 22, 82, 8),
+            ),
           ),
         ],
-      ),
-      backgroundColor: Colors.white,
-      body: Center(
-        child: _selectedIndex == 0 ? _buildHomePage() : (_selectedIndex == 1 ? _buildDataPage() : _widgetOptions.elementAt(_selectedIndex)),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -98,25 +110,26 @@ class _AgentHomePageState extends State<AgentHomePage> {
         currentIndex: _selectedIndex,
         selectedItemColor: const Color.fromARGB(255, 242, 242, 242),
         onTap: _onItemTapped,
-        backgroundColor: Color(0xff700f68),
+        backgroundColor:
+            Color.fromARGB(255, 22, 82, 8), // Make the background transparent
       ),
       floatingActionButton: _selectedIndex == 1
           ? FloatingActionButton(
-        onPressed: () async {
-          FilePickerResult? result = await FilePicker.platform.pickFiles(
-            type: FileType.custom,
-            allowedExtensions: ['xlsx', 'xls'],
-          );
+              onPressed: () async {
+                FilePickerResult? result = await FilePicker.platform.pickFiles(
+                  type: FileType.custom,
+                  allowedExtensions: ['xlsx', 'xls'],
+                );
 
-          if (result != null) {
-            _uploadAndDisplayFile(result.files.single.bytes!);
-          } else {
-            print('User canceled file picker');
-          }
-        },
-        child: Icon(Icons.add),
-        backgroundColor: Color(0xff700f68),
-      )
+                if (result != null) {
+                  _uploadAndDisplayFile(result.files.single.bytes!);
+                } else {
+                  print('User canceled file picker');
+                }
+              },
+              child: Icon(Icons.add),
+              backgroundColor: Color.fromARGB(255, 22, 82, 8),
+            )
           : null,
     );
   }
@@ -146,10 +159,10 @@ class _AgentHomePageState extends State<AgentHomePage> {
     String fileName = DateTime.now().millisecondsSinceEpoch.toString();
     await _storeExcelDataInFirestore(parsedData, fileName);
     print('Excel data stored successfully in Firestore.');
-
   }
 
-  Future<void> _storeExcelDataInFirestore(List<List<dynamic>> data, String fileName) async {
+  Future<void> _storeExcelDataInFirestore(
+      List<List<dynamic>> data, String fileName) async {
     CollectionReference excelCollection = _firestore.collection(fileName);
 
     String newDataString = data.toString();
@@ -180,27 +193,27 @@ class _AgentHomePageState extends State<AgentHomePage> {
   Widget _buildDataPage() {
     return _uploadedData.isNotEmpty
         ? SingleChildScrollView(
-      child: Column(
-        children: _uploadedData.map((row) {
-          return Padding(
-            padding: EdgeInsets.symmetric(vertical: 4.0),
-            child: Row(
-              children: row.map((cell) {
-                return Expanded(
-                  child: Text(
-                    cell.toString(),
-                    style: TextStyle(fontSize: 16.0),
+            child: Column(
+              children: _uploadedData.map((row) {
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4.0),
+                  child: Row(
+                    children: row.map((cell) {
+                      return Expanded(
+                        child: Text(
+                          cell.toString(),
+                          style: TextStyle(fontSize: 16.0),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 );
               }).toList(),
             ),
-          );
-        }).toList(),
-      ),
-    )
+          )
         : Center(
-      child: Text('No data uploaded'),
-    );
+            child: Text('No data uploaded'),
+          );
   }
 
   Widget _buildHomePage() {
@@ -218,7 +231,8 @@ class _AgentHomePageState extends State<AgentHomePage> {
           return ListView.builder(
             itemCount: documents.length,
             itemBuilder: (context, index) {
-              final Map<String, dynamic> data = documents[index].data() as Map<String, dynamic>;
+              final Map<String, dynamic> data =
+                  documents[index].data() as Map<String, dynamic>;
               return ListTile(
                 title: Text(data['email']),
                 subtitle: Text(data['password']),
@@ -252,7 +266,8 @@ class AddWholesalerPage extends StatefulWidget {
 }
 
 class _AddWholesalerPageState extends State<AddWholesalerPage> {
-  final TextEditingController _wholesalerEmailController = TextEditingController();
+  final TextEditingController _wholesalerEmailController =
+      TextEditingController();
   List<String> _assignedPasswords = [];
 
   @override
@@ -295,6 +310,10 @@ class _AddWholesalerPageState extends State<AddWholesalerPage> {
               }
             },
             child: Text('Generate Password'),
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Color.fromARGB(255, 22, 82, 8), // Change the text color here
+            ),
           ),
         ],
       ),
@@ -321,7 +340,7 @@ class _AddWholesalerPageState extends State<AddWholesalerPage> {
                   SizedBox(height: 10),
                   Text(
                     'Password copied to clipboard!',
-                    style: TextStyle(color: Color(0xff700f68)),
+                    style: TextStyle(color: Color.fromARGB(255, 22, 82, 8)),
                   ),
                 ],
               ),
@@ -358,7 +377,7 @@ class _AddWholesalerPageState extends State<AddWholesalerPage> {
                   SizedBox(height: 10),
                   Text(
                     'Email & Password copied to clipboard!',
-                    style: TextStyle(color: Color(0xff700f68)),
+                    style: TextStyle(color: Color.fromARGB(255, 22, 82, 8)),
                   ),
                 ],
               ),
@@ -390,16 +409,19 @@ class _AddWholesalerPageState extends State<AddWholesalerPage> {
       password += chars[random.nextInt(chars.length)];
     }
 
-    password = password.replaceFirst(
-        RegExp('[a-zA-Z0-9]'), specialChars[random.nextInt(specialChars.length)]);
+    password = password.replaceFirst(RegExp('[a-zA-Z0-9]'),
+        specialChars[random.nextInt(specialChars.length)]);
 
-    password = password.replaceFirst(RegExp('[a-zA-Z]'), '0123456789'[random.nextInt(10)]);
-    password = password.replaceFirst(RegExp('[a-zA-Z]'), '0123456789'[random.nextInt(10)]);
+    password = password.replaceFirst(
+        RegExp('[a-zA-Z]'), '0123456789'[random.nextInt(10)]);
+    password = password.replaceFirst(
+        RegExp('[a-zA-Z]'), '0123456789'[random.nextInt(10)]);
 
     return password;
   }
 
-  void _storeWholesalerData(FirebaseFirestore firestore, String email, String password) {
+  void _storeWholesalerData(
+      FirebaseFirestore firestore, String email, String password) {
     firestore.collection('wholesalers').add({
       'email': email,
       'password': password,

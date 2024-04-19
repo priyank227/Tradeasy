@@ -9,13 +9,15 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isSignIn = true;
   bool _loginSuccess = false; // Variable to track login success
   TextEditingController _agentEmailController = TextEditingController();
   TextEditingController _agentPasswordController = TextEditingController();
-  TextEditingController _agentConfirmPasswordController = TextEditingController();
+  TextEditingController _agentConfirmPasswordController =
+      TextEditingController();
   TextEditingController _wholesalerEmailController = TextEditingController();
   TextEditingController _wholesalerPasswordController = TextEditingController();
   final _agentFormKey = GlobalKey<FormState>();
@@ -35,8 +37,10 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false, // Add this to prevent the keyboard from resizing the background image
-      backgroundColor: Colors.transparent, // Set background color to transparent
+      resizeToAvoidBottomInset:
+          false, // Add this to prevent the keyboard from resizing the background image
+      backgroundColor:
+          Colors.transparent, // Set background color to transparent
       body: Stack(
         children: [
           Image.asset(
@@ -57,7 +61,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                 SizedBox(height: 20),
                 TabBar(
                   controller: _tabController,
-                  indicatorColor: Color(0xff700f68),
+                  indicatorColor: Color.fromARGB(255, 22, 82, 8),
                   tabs: [
                     Tab(text: 'Agent'),
                     Tab(text: 'Wholesaler'),
@@ -85,7 +89,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                               _isSignIn
                                   ? 'New user? Press here to Sign Up'
                                   : 'Already have an account? Press here to Login',
-                              style: TextStyle(color: Color(0xff700f68)),
+                              style: TextStyle(
+                                  color: Color.fromARGB(255, 22, 82, 8)),
                             ),
                           ),
                           if (_errorMessage != null)
@@ -97,7 +102,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                           if (_loginSuccess)
                             Text(
                               'Login Successful!',
-                              style: TextStyle(color: Color(0xff700f68)),
+                              style: TextStyle(
+                                  color: Color.fromARGB(255, 22, 82, 8)),
                             ),
                         ],
                       ),
@@ -192,7 +198,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             },
             style: ElevatedButton.styleFrom(
               foregroundColor: Colors.white,
-              backgroundColor: Color(0xff700f68),
+              backgroundColor: Color.fromARGB(255, 22, 82, 8),
             ),
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -262,7 +268,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
               return null;
             },
           ),
-          SizedBox(height:           10),
+          SizedBox(height: 10),
           TextFormField(
             controller: _agentConfirmPasswordController,
             obscureText: !_agentConfirmPasswordVisible,
@@ -324,7 +330,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             },
             style: ElevatedButton.styleFrom(
               foregroundColor: Colors.white,
-              backgroundColor: Color(0xff700f68),
+              backgroundColor: Color.fromARGB(255, 22, 82, 8),
             ),
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -404,7 +410,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                     .where('password', isEqualTo: password)
                     .get();
                 if (querySnapshot.docs.isNotEmpty) {
-                  final username = email; 
+                  final username = email;
                   setState(() {
                     _loginSuccess = true;
                   });
@@ -412,7 +418,8 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
                     context,
                     MaterialPageRoute(
                         builder: (context) => WholesalerRegistrationPage(
-                            email: username)), // Pass username to WholesalerHomePage
+                            email:
+                                username)), // Pass username to WholesalerHomePage
                   );
                   _showSuccessMessage('Login successful');
                 } else {
@@ -439,7 +446,7 @@ class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMix
             },
             style: ElevatedButton.styleFrom(
               foregroundColor: Colors.white,
-              backgroundColor: Color(0xff700f68),
+              backgroundColor: Color.fromARGB(255, 22, 82, 8),
             ),
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),

@@ -85,7 +85,7 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Welcome, ${widget.name}'),
-        backgroundColor: Color(0xff700f68),
+        backgroundColor: Color.fromARGB(255, 22, 82, 8),
         actions: [
           IconButton(
             icon: Icon(Icons.logout, color: Colors.white),
@@ -127,7 +127,7 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
             label: 'Profile',
           ),
         ],
-        backgroundColor: Color(0xff700f68),
+        backgroundColor: Color.fromARGB(255, 22, 82, 8),
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() {
