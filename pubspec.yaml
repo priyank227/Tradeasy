@@ -49,4 +49,7 @@ flutter_launcher_icons:
 flutter:
  
   uses-material-design: true
+  assets:
+    - Assets/splace_screen.gif
+    - Assets/background.png
 

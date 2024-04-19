@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tradeasy/home_page.dart';
-// import 'package:tradeasy/wholesaler_home.dart';
 import 'package:tradeasy/wholesaler_registration.dart'; // Assuming you have a WholesalerHomePage
 
 class LoginPage extends StatefulWidget {
@@ -10,26 +9,19 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage>
-    with SingleTickerProviderStateMixin {
+class _LoginPageState extends State<LoginPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isSignIn = true;
   bool _loginSuccess = false; // Variable to track login success
-
   TextEditingController _agentEmailController = TextEditingController();
   TextEditingController _agentPasswordController = TextEditingController();
-  TextEditingController _agentConfirmPasswordController =
-      TextEditingController();
-
+  TextEditingController _agentConfirmPasswordController = TextEditingController();
   TextEditingController _wholesalerEmailController = TextEditingController();
   TextEditingController _wholesalerPasswordController = TextEditingController();
-
   final _agentFormKey = GlobalKey<FormState>();
   final _wholesalerFormKey = GlobalKey<FormState>();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
   String? _errorMessage;
-
   bool _agentPasswordVisible = false;
   bool _agentConfirmPasswordVisible = false;
   bool _wholesalerPasswordVisible = false;
@@ -43,73 +35,80 @@ class _LoginPageState extends State<LoginPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Tradeasy'),
-        backgroundColor: Color(0xff700f68),
-      ),
-      backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'Welcome to Tradeasy',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            TabBar(
-              controller: _tabController,
-              indicatorColor: Color(0xff700f68),
-              tabs: [
-                Tab(text: 'Agent'),
-                Tab(text: 'Wholesaler'),
-              ],
-            ),
-            SizedBox(height: 10),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+      resizeToAvoidBottomInset: false, // Add this to prevent the keyboard from resizing the background image
+      backgroundColor: Colors.transparent, // Set background color to transparent
+      body: Stack(
+        children: [
+          Image.asset(
+            '../Assets/background.png', // Replace 'Assets/your_wallpaper.jpg' with your wallpaper image path
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            fit: BoxFit.cover,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text(
+                  'Welcome to Tradeasy',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 20),
+                TabBar(
+                  controller: _tabController,
+                  indicatorColor: Color(0xff700f68),
+                  tabs: [
+                    Tab(text: 'Agent'),
+                    Tab(text: 'Wholesaler'),
+                  ],
+                ),
+                SizedBox(height: 10),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
                     children: [
-                      _isSignIn
-                          ? _buildAgentSignInForm()
-                          : _buildAgentSignUpForm(),
-                      SizedBox(height: 10),
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _isSignIn = !_isSignIn;
-                          });
-                        },
-                        child: Text(
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                           _isSignIn
-                              ? 'New user? Press here to Sign Up'
-                              : 'Already have an account? Press here to Login',
-                          style: TextStyle(color: Color(0xff700f68)),
-                        ),
+                              ? _buildAgentSignInForm()
+                              : _buildAgentSignUpForm(),
+                          SizedBox(height: 10),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _isSignIn = !_isSignIn;
+                              });
+                            },
+                            child: Text(
+                              _isSignIn
+                                  ? 'New user? Press here to Sign Up'
+                                  : 'Already have an account? Press here to Login',
+                              style: TextStyle(color: Color(0xff700f68)),
+                            ),
+                          ),
+                          if (_errorMessage != null)
+                            Text(
+                              _errorMessage!,
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          // Toggle for showing login success
+                          if (_loginSuccess)
+                            Text(
+                              'Login Successful!',
+                              style: TextStyle(color: Color(0xff700f68)),
+                            ),
+                        ],
                       ),
-                      if (_errorMessage != null)
-                        Text(
-                          _errorMessage!,
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      // Toggle for showing login success
-                      if (_loginSuccess)
-                        Text(
-                          'Login Successful!',
-                          style: TextStyle(color: Color(0xff700f68)),
-                        ),
+                      _buildWholesalerLoginForm(),
                     ],
                   ),
-                  _buildWholesalerLoginForm(),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -464,4 +463,3 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 }
-
