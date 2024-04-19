@@ -1,8 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tradeasy/home_page.dart';
-import 'package:tradeasy/wholesaler_home.dart';
+// import 'package:tradeasy/wholesaler_home.dart';
+import 'package:tradeasy/wholesaler_registration.dart'; // Assuming you have a WholesalerHomePage
 
 class LoginPage extends StatefulWidget {
   @override
@@ -13,20 +14,25 @@ class _LoginPageState extends State<LoginPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isSignIn = true;
+  bool _loginSuccess = false; // Variable to track login success
 
   TextEditingController _agentEmailController = TextEditingController();
   TextEditingController _agentPasswordController = TextEditingController();
   TextEditingController _agentConfirmPasswordController =
       TextEditingController();
+
   TextEditingController _wholesalerEmailController = TextEditingController();
   TextEditingController _wholesalerPasswordController = TextEditingController();
 
-  final _signInFormKey = GlobalKey<FormState>();
-  final _signUpFormKey = GlobalKey<FormState>();
+  final _agentFormKey = GlobalKey<FormState>();
   final _wholesalerFormKey = GlobalKey<FormState>();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  FirebaseAuth _auth = FirebaseAuth.instance;
-  FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String? _errorMessage;
+
+  bool _agentPasswordVisible = false;
+  bool _agentConfirmPasswordVisible = false;
+  bool _wholesalerPasswordVisible = false;
 
   @override
   void initState() {
@@ -39,7 +45,7 @@ class _LoginPageState extends State<LoginPage>
     return Scaffold(
       appBar: AppBar(
         title: Text('Tradeasy'),
-        backgroundColor: Colors.green,
+        backgroundColor: Color(0xff700f68),
       ),
       backgroundColor: Colors.white,
       body: Padding(
@@ -54,7 +60,7 @@ class _LoginPageState extends State<LoginPage>
             SizedBox(height: 20),
             TabBar(
               controller: _tabController,
-              indicatorColor: Colors.green,
+              indicatorColor: Color(0xff700f68),
               tabs: [
                 Tab(text: 'Agent'),
                 Tab(text: 'Wholesaler'),
@@ -68,7 +74,9 @@ class _LoginPageState extends State<LoginPage>
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _isSignIn ? _buildSignInForm() : _buildSignUpForm(),
+                      _isSignIn
+                          ? _buildAgentSignInForm()
+                          : _buildAgentSignUpForm(),
                       SizedBox(height: 10),
                       TextButton(
                         onPressed: () {
@@ -80,14 +88,23 @@ class _LoginPageState extends State<LoginPage>
                           _isSignIn
                               ? 'New user? Press here to Sign Up'
                               : 'Already have an account? Press here to Login',
-                          style: TextStyle(color: Colors.blue),
+                          style: TextStyle(color: Color(0xff700f68)),
                         ),
                       ),
+                      if (_errorMessage != null)
+                        Text(
+                          _errorMessage!,
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      // Toggle for showing login success
+                      if (_loginSuccess)
+                        Text(
+                          'Login Successful!',
+                          style: TextStyle(color: Color(0xff700f68)),
+                        ),
                     ],
                   ),
-                  Center(
-                    child: _buildWholesalerLoginForm(),
-                  ),
+                  _buildWholesalerLoginForm(),
                 ],
               ),
             ),
@@ -97,9 +114,9 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  Widget _buildSignInForm() {
+  Widget _buildAgentSignInForm() {
     return Form(
-      key: _signInFormKey,
+      key: _agentFormKey,
       child: Column(
         children: [
           TextFormField(
@@ -120,12 +137,25 @@ class _LoginPageState extends State<LoginPage>
           SizedBox(height: 10),
           TextFormField(
             controller: _agentPasswordController,
-            obscureText: true,
+            obscureText: !_agentPasswordVisible,
             decoration: InputDecoration(
               hintText: 'Enter your password',
               labelText: 'Password',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.lock),
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _agentPasswordVisible = !_agentPasswordVisible;
+                  });
+                },
+                icon: Icon(
+                  _agentPasswordVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                  color: Colors.grey,
+                ),
+              ),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -137,24 +167,33 @@ class _LoginPageState extends State<LoginPage>
           SizedBox(height: 20),
           ElevatedButton(
             onPressed: () async {
-              if (_signInFormKey.currentState!.validate()) {
+              if (_agentFormKey.currentState!.validate()) {
                 try {
                   await _auth.signInWithEmailAndPassword(
-                      email: _agentEmailController.text,
-                      password: _agentPasswordController.text);
-                  // Navigate to Agent Home Page
+                    email: _agentEmailController.text,
+                    password: _agentPasswordController.text,
+                  );
+                  _showSuccessMessage('Login successful');
+                  setState(() {
+                    _loginSuccess = true;
+                  });
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => AgentHomePage()),
                   );
+                } on FirebaseAuthException catch (e) {
+                  setState(() {
+                    _errorMessage = e.message;
+                  });
+                  print('Error signing in: ${e.message}');
                 } catch (e) {
-                  print("Failed to sign in: $e");
+                  print('Error signing in: $e');
                 }
               }
             },
             style: ElevatedButton.styleFrom(
               foregroundColor: Colors.white,
-              backgroundColor: Colors.green,
+              backgroundColor: Color(0xff700f68),
             ),
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -169,9 +208,12 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  Widget _buildSignUpForm() {
+  Widget _buildAgentSignUpForm() {
+    final RegExp passwordRegExp =
+        RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{6,}$');
+
     return Form(
-      key: _signUpFormKey,
+      key: _agentFormKey,
       child: Column(
         children: [
           TextFormField(
@@ -192,29 +234,58 @@ class _LoginPageState extends State<LoginPage>
           SizedBox(height: 10),
           TextFormField(
             controller: _agentPasswordController,
-            obscureText: true,
+            obscureText: !_agentPasswordVisible,
             decoration: InputDecoration(
               hintText: 'Enter your password',
               labelText: 'Password',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.lock),
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _agentPasswordVisible = !_agentPasswordVisible;
+                  });
+                },
+                icon: Icon(
+                  _agentPasswordVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                  color: Colors.grey,
+                ),
+              ),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your password';
+              } else if (!passwordRegExp.hasMatch(value)) {
+                return 'Password must contain at least one uppercase letter, one lowercase letter, one number, one special character, and be at least 6 characters long';
               }
               return null;
             },
           ),
-          SizedBox(height: 10),
+          SizedBox(height:           10),
           TextFormField(
             controller: _agentConfirmPasswordController,
-            obscureText: true,
+            obscureText: !_agentConfirmPasswordVisible,
             decoration: InputDecoration(
               hintText: 'Confirm your password',
               labelText: 'Confirm Password',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.lock),
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _agentConfirmPasswordVisible =
+                        !_agentConfirmPasswordVisible;
+                  });
+                },
+                icon: Icon(
+                  _agentConfirmPasswordVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                  color: Colors.grey,
+                ),
+              ),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -228,35 +299,33 @@ class _LoginPageState extends State<LoginPage>
           SizedBox(height: 20),
           ElevatedButton(
             onPressed: () async {
-              if (_signUpFormKey.currentState!.validate()) {
+              if (_agentFormKey.currentState!.validate()) {
                 try {
-                  UserCredential userCredential = await _auth
-                      .createUserWithEmailAndPassword(
-                          email: _agentEmailController.text,
-                          password: _agentPasswordController.text);
-                  // Store user data in Firestore
-                  await _firestore.collection('agents').doc(userCredential.user!.uid).set({
-                    'email': _agentEmailController.text,
-                    // Add more user data fields if needed
+                  await _auth.createUserWithEmailAndPassword(
+                    email: _agentEmailController.text,
+                    password: _agentPasswordController.text,
+                  );
+                  _showSuccessMessage('Signup successful');
+                  setState(() {
+                    _loginSuccess = true;
                   });
-                  // Navigate to Agent Home Page
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => AgentHomePage()),
                   );
+                } on FirebaseAuthException catch (e) {
+                  setState(() {
+                    _errorMessage = e.message;
+                  });
+                  print('Error signing up: ${e.message}');
                 } catch (e) {
-                  print("Failed to sign up: $e");
+                  print('Error signing up: $e');
                 }
-              } else {
-                // Navigate to the sign-in form
-                setState(() {
-                  _isSignIn = true;
-                });
               }
             },
             style: ElevatedButton.styleFrom(
               foregroundColor: Colors.white,
-              backgroundColor: Colors.blue,
+              backgroundColor: Color(0xff700f68),
             ),
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -288,6 +357,8 @@ class _LoginPageState extends State<LoginPage>
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your email';
+              } else if (!value.contains('@') || !value.contains('.')) {
+                return 'Invalid email address';
               }
               return null;
             },
@@ -295,12 +366,25 @@ class _LoginPageState extends State<LoginPage>
           SizedBox(height: 10),
           TextFormField(
             controller: _wholesalerPasswordController,
-            obscureText: true,
+            obscureText: !_wholesalerPasswordVisible,
             decoration: InputDecoration(
               hintText: 'Enter your password',
               labelText: 'Password',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.lock),
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _wholesalerPasswordVisible = !_wholesalerPasswordVisible;
+                  });
+                },
+                icon: Icon(
+                  _wholesalerPasswordVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                  color: Colors.grey,
+                ),
+              ),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -311,40 +395,73 @@ class _LoginPageState extends State<LoginPage>
           ),
           SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (_wholesalerFormKey.currentState!.validate()) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => WholesalerHomePage(
-                          email: _wholesalerEmailController.text)),
-                );
+                final email = _wholesalerEmailController.text;
+                final password = _wholesalerPasswordController.text;
+                final querySnapshot = await FirebaseFirestore.instance
+                    .collection('wholesalers')
+                    .where('email', isEqualTo: email)
+                    .where('password', isEqualTo: password)
+                    .get();
+                if (querySnapshot.docs.isNotEmpty) {
+                  final username = email; 
+                  setState(() {
+                    _loginSuccess = true;
+                  });
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => WholesalerRegistrationPage(
+                            email: username)), // Pass username to WholesalerHomePage
+                  );
+                  _showSuccessMessage('Login successful');
+                } else {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Invalid Credentials'),
+                        content: Text(
+                            'Your password is incorrect. If forgotten, please contact the agent.'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('OK'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                }
               }
             },
             style: ElevatedButton.styleFrom(
               foregroundColor: Colors.white,
-              backgroundColor: Colors.green,
+              backgroundColor: Color(0xff700f68),
             ),
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Text(
-                'Login',
+                'Wholesaler Login',
                 style: TextStyle(fontSize: 18),
               ),
-            ),
-          ),
-          SizedBox(height: 10),
-          TextButton(
-            onPressed: () {
-              // Implement forgot password functionality
-            },
-            child: Text(
-              'Forgot Password?',
-              style: TextStyle(color: Colors.blue),
             ),
           ),
         ],
       ),
     );
   }
+
+  void _showSuccessMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
 }
+

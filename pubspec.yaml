@@ -15,15 +15,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  path_provider: ^2.0.2
   open_file: ^3.0.1
   carousel_slider: ^4.0.0
+  shared_preferences: ^2.0.17
 
 
   file_picker: ^6.1.1
   excel: ^4.0.2
   email_validator: '^2.1.16'
-  path_provider: ^2.0.3
-  
+
 
   cupertino_icons: ^1.0.2
   excel_dart: ^3.0.0
