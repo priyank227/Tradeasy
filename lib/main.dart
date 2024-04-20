@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 // import 'package:tradeasy/login_page.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:tradeasy/splace_screen.dart';
+// import 'package:tradeasy/home_page.dart';
+import 'package:tradeasy/login_page.dart';
+// import 'package:tradeasy/splace_screen.dart';
+// import 'package:tradeasy/wholesaler_home.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -21,7 +24,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       debugShowCheckedModeBanner: false, // Remove the debug banner
-      home: SplashScreen(), // Display splash screen initially
+      home: LoginPage(), // Display splash screen initially
     );
   }
 }
