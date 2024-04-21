@@ -21,8 +21,7 @@ class _LoginPageState extends State<LoginPage>
   final _wholesalerFormKey = GlobalKey<FormState>();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   String? _errorMessage;
-  String?
-      _wholesalerErrorMessage; // New variable to hold wholesaler error message
+  String? _wholesalerErrorMessage; // New variable to hold wholesaler error message
   bool _agentPasswordVisible = false;
   bool _wholesalerPasswordVisible = false;
 
@@ -177,168 +176,167 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
- Widget _buildWholesalerLoginForm() {
-  return Form(
-    key: _wholesalerFormKey,
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        TextFormField(
-          controller: _wholesalerEmailController,
-          decoration: InputDecoration(
-            hintText: 'Enter your email',
-            labelText: 'Email',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.email),
+  Widget _buildWholesalerLoginForm() {
+    return Form(
+      key: _wholesalerFormKey,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TextFormField(
+            controller: _wholesalerEmailController,
+            decoration: InputDecoration(
+              hintText: 'Enter your email',
+              labelText: 'Email',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.email),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your email';
+              }
+              return null;
+            },
           ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter your email';
-            }
-            return null;
-          },
-        ),
-        SizedBox(height: 10),
-        TextFormField(
-          controller: _wholesalerPasswordController,
-          obscureText: !_wholesalerPasswordVisible,
-          decoration: InputDecoration(
-            hintText: 'Enter your password',
-            labelText: 'Password',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.lock),
-            suffixIcon: IconButton(
-              onPressed: () {
-                setState(() {
-                  _wholesalerPasswordVisible = !_wholesalerPasswordVisible;
-                });
-              },
-              icon: Icon(
-                _wholesalerPasswordVisible
-                    ? Icons.visibility
-                    : Icons.visibility_off,
-                color: Colors.grey,
+          SizedBox(height: 10),
+          TextFormField(
+            controller: _wholesalerPasswordController,
+            obscureText: !_wholesalerPasswordVisible,
+            decoration: InputDecoration(
+              hintText: 'Enter your password',
+              labelText: 'Password',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.lock),
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _wholesalerPasswordVisible = !_wholesalerPasswordVisible;
+                  });
+                },
+                icon: Icon(
+                  _wholesalerPasswordVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                  color: Colors.grey,
+                ),
               ),
             ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your password';
+              }
+              return null;
+            },
           ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter your password';
-            }
-            return null;
-          },
-        ),
-        SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: () async {
-            if (_wholesalerFormKey.currentState!.validate()) {
-              final email = _wholesalerEmailController.text.trim();
-              final password = _wholesalerPasswordController.text.trim();
-              try {
-                // Check if wholesaler exists in Firestore
-                bool isValidWholesaler =
-                    await _validateWholesalerCredentials(email, password);
-                if (isValidWholesaler) {
-                  // Navigate to wholesaler page after successful login
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => WholesalerHomePage(),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () async {
+              if (_wholesalerFormKey.currentState!.validate()) {
+                final email = _wholesalerEmailController.text.trim();
+                final password = _wholesalerPasswordController.text.trim();
+                try {
+                  // Check if wholesaler exists in Firestore
+                  bool isValidWholesaler =
+                      await _validateWholesalerCredentials(email, password);
+                  if (isValidWholesaler) {
+                    // Navigate to wholesaler page after successful login
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => WholesalerHomePage(email: email,),
+                      ),
+                    );
+                  } else {
+                    // Display error message for invalid credentials
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Invalid Credentials'),
+                          content: Text(
+                              'Please check your email and password. If you have forgotten your password, please contact the agent.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('OK'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                } catch (e) {
+                  print('Error signing in: $e');
+                  // Show a snackbar to indicate error
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to sign in. Please try again.'),
+                      backgroundColor: Colors.red,
                     ),
                   );
-                } else {
-                  // Display error message for invalid credentials
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text('Invalid Credentials'),
-                        content: Text(
-                            'Please check your email and password. If you have forgotten your password, please contact the agent.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: Text('OK'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
                 }
-              } catch (e) {
-                print('Error signing in: $e');
-                // Show a snackbar to indicate error
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to sign in. Please try again.'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
               }
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor: Color.fromARGB(255, 22, 82, 8),
-          ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Text(
-              'Wholesaler Login',
-              style: TextStyle(fontSize: 18),
+            },
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Color.fromARGB(255, 22, 82, 8),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Text(
+                'Wholesaler Login',
+                style: TextStyle(fontSize: 18),
+              ),
             ),
           ),
-        ),
-        SizedBox(
-          height: 10,
-        ),
-        TextButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => WholesalerRegistrationPage(),
-              ),
-            );
-          },
-          child: Text(
-            'First time logging in? Click here!',
-            style: TextStyle(color: Colors.blue),
+          SizedBox(
+            height: 10,
           ),
-        ),
-        if (_wholesalerErrorMessage != null)
-          Text(
-            _wholesalerErrorMessage!,
-            style: TextStyle(color: Colors.red),
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => WholesalerRegistrationPage(),
+                ),
+              );
+            },
+            child: Text(
+              'First time logging in? Click here!',
+              style: TextStyle(color: Colors.blue),
+            ),
           ),
-      ],
-    ),
-  );
-}
-
-Future<bool> _validateWholesalerCredentials(
-    String email, String password) async {
-  try {
-    // Access the 'wholesalers' collection in Firestore
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-        .collection('wholesalers')
-        .where('email', isEqualTo: email)
-        .where('password', isEqualTo: password)
-        .get();
-
-    // Check if any documents match the email and password
-    if (querySnapshot.docs.isNotEmpty) {
-      return true; // Wholesaler credentials are valid
-    } else {
-      return false; // Wholesaler credentials are invalid
-    }
-  } catch (e) {
-    // Error occurred while querying Firestore
-    print('Error validating wholesaler credentials: $e');
-    throw e;
+          if (_wholesalerErrorMessage != null)
+            Text(
+              _wholesalerErrorMessage!,
+              style: TextStyle(color: Colors.red),
+            ),
+        ],
+      ),
+    );
   }
-}
 
+  Future<bool> _validateWholesalerCredentials(
+      String email, String password) async {
+    try {
+      // Access the 'wholesalers' collection in Firestore
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('wholesalers')
+          .where('email', isEqualTo: email)
+          .where('password', isEqualTo: password)
+          .get();
+
+      // Check if any documents match the email and password
+      if (querySnapshot.docs.isNotEmpty) {
+        return true; // Wholesaler credentials are valid
+      } else {
+        return false; // Wholesaler credentials are invalid
+      }
+    } catch (e) {
+      // Error occurred while querying Firestore
+      print('Error validating wholesaler credentials: $e');
+      throw e;
+    }
+  }
 }

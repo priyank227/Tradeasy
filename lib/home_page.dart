@@ -354,16 +354,17 @@ class _AddWholesalerPageState extends State<AddWholesalerPage> {
   }
 
   void _storeWholesalerData(
-      FirebaseFirestore firestore, String email, String password) {
-    firestore.collection('wholesalers').add({
-      'email': email,
-      'password': password,
-    }).then((value) {
-      print('Wholesaler data stored successfully');
-    }).catchError((error) {
-      print('Failed to store wholesaler data: $error');
-    });
-  }
+  FirebaseFirestore firestore, String email, String password) {
+  firestore.collection('wholesalers').doc(email).set({
+    'email': email,
+    'password': password,
+  }).then((value) {
+    print('Wholesaler data stored successfully');
+  }).catchError((error) {
+    print('Failed to store wholesaler data: $error');
+  });
+}
+
 }
 
 class AddDataPage extends StatefulWidget {

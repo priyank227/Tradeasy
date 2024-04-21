@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 // import 'package:tradeasy/home_page.dart';
 import 'package:tradeasy/login_page.dart';
+// import 'package:tradeasy/profile_page.dart';
+// import 'package:tradeasy/wholesaler_home.dart';
 // import 'package:tradeasy/splace_screen.dart';
 // import 'package:tradeasy/wholesaler_home.dart';
 import 'firebase_options.dart';
