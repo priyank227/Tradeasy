@@ -122,26 +122,34 @@ class _WholesalerProfilePageState extends State<WholesalerProfilePage> {
   }
 
   void _saveProfileChanges() async {
-  try {
-    await FirebaseFirestore.instance.collection('w_detail').doc(widget.email).update({
-      'name': _name,
-      'mobile': _mobile,
-      'shopName': _shopName,
-      'shopGst': _shopGst,
-      'state': _state,
-    });
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Profile updated successfully')));
-    Navigator.of(context).pop(); // Close the dialog
-  } catch (e) {
-    print('Error updating profile: $e');
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update profile')));
+    try {
+      await FirebaseFirestore.instance.collection('w_detail').doc(widget.email).update({
+        'name': _name,
+        'mobile': _mobile,
+        'shopName': _shopName,
+        'shopGst': _shopGst,
+        'state': _state,
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Profile updated successfully')));
+      Navigator.of(context).pop(); // Close the dialog
+    } catch (e) {
+      print('Error updating profile: $e');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update profile')));
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Color.fromARGB(255, 22, 82, 8), // Green color
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
       body: Stack(
         children: [
           Container(
@@ -178,8 +186,18 @@ class _WholesalerProfilePageState extends State<WholesalerProfilePage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          Color.fromARGB(255, 22, 82, 8)),
+                          //forground color
+                      foregroundColor: MaterialStateProperty.all<Color>(
+                          Colors.white),
+
+                    ),
+
                     onPressed: _editProfile,
                     child: Text('Edit'),
+
                   ),
                 ),
               ],

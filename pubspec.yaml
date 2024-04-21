@@ -19,6 +19,7 @@ dependencies:
   open_file: ^3.0.1
   carousel_slider: ^4.0.0
   shared_preferences: ^2.0.17
+  intl: ^0.17.0
 
 
   file_picker: ^6.1.1

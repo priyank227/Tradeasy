@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart'; // Import for date formatting
 import 'package:tradeasy/profile_page.dart';
 import 'dart:async';
 
@@ -14,6 +15,7 @@ class WholesalerHomePage extends StatefulWidget {
 
 class _WholesalerHomePageState extends State<WholesalerHomePage> {
   late String _name;
+  String _currentPage = 'Data'; // Default page is 'Data'
 
   @override
   void initState() {
@@ -59,6 +61,9 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
                   ),
                 ),
               ),
+              Expanded(
+                child: _buildCurrentPage(),
+              ),
             ],
           ),
         ],
@@ -85,19 +90,24 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
             ListTile(
               title: Text('Data'),
               onTap: () {
-                // Navigate to Data page
+                setState(() {
+                  _currentPage = "Data";
+                });
+                Navigator.pop(context); // Close drawer
               },
             ),
             ListTile(
               title: Text('Past Data'),
               onTap: () {
-                // Navigate to Past Data page
+                setState(() {
+                  _currentPage = 'Past Data';
+                });
+                Navigator.pop(context); // Close drawer
               },
             ),
             ListTile(
               title: Text('Profile'),
               onTap: () {
-                // Step 2: Navigate to Profile page
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -123,6 +133,100 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCurrentPage() {
+    switch (_currentPage) {
+      case 'Data':
+        return _buildDataPage();
+      case 'Past Data':
+        return _buildPastDataPage();
+      // case 'Profile':
+      //   return WholesalerProfilePage(email: widget.email);
+      default:
+        return Container();
+    }
+  }
+
+  Widget _buildDataPage() {
+  return FutureBuilder(
+    future: _fetchDataFromFirestore(),
+    builder: (context, AsyncSnapshot<String?> snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return Center(child: CircularProgressIndicator());
+      } else if (snapshot.hasError) {
+        return Center(child: Text('Error: ${snapshot.error}'));
+      } else if (snapshot.hasData && snapshot.data != null) {
+        String? dataString = snapshot.data;
+
+        if (dataString == null || dataString.isEmpty) {
+          return Center(child: Text('Today has no data'));
+        }
+
+        List<String> dataSetList = dataString.split(' - ');
+
+        if (dataSetList.isEmpty) {
+          return Center(child: Text('Today has no data'));
+        }
+
+        List<Widget> dataCards = [];
+        for (int i = 0; i < dataSetList.length; i += 3) {
+          if (i + 2 < dataSetList.length) {
+            String product = dataSetList[i];
+            String quantity = dataSetList[i + 1];
+            String description = dataSetList[i + 2];
+            dataCards.add(_buildDataCard(product, quantity, description));
+            if (i != dataSetList.length - 3) {
+              dataCards.add(Divider());
+            }
+          }
+        }
+
+        return ListView(
+          padding: EdgeInsets.all(16.0),
+          children: dataCards,
+        );
+      } else {
+        return Center(child: Text('Today has no data'));
+      }
+    },
+  );
+}
+
+Future<String?> _fetchDataFromFirestore() async {
+  try {
+    String formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore.instance
+        .collection('export_data')
+        .doc(formattedDate)
+        .get();
+
+    if (snapshot.exists) {
+      // Get the data map
+      Map<String, dynamic> dataMap = snapshot.data() as Map<String, dynamic>? ?? {};
+
+      // Extract the 'items' list from the data map
+      List<dynamic> itemsList = dataMap['items'] ?? [];
+
+      // Convert the items list to a string
+      String dataString = itemsList.join(' - ');
+
+      return dataString;
+    } else {
+      return null;
+    }
+  } catch (e) {
+    print('Error fetching data: $e');
+    return null;
+  }
+}
+
+
+
+  Widget _buildPastDataPage() {
+    return Center(
+      child: Text('Past Data Page'),
     );
   }
 
@@ -249,6 +353,48 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
       Navigator.pop(context); // Close the drawer
     });
   }
+
+  Widget _buildDataCard(String product, String quantity, String description) {
+  return Card(
+    elevation: 3,
+    margin: EdgeInsets.symmetric(vertical: 8.0),
+    child: ListTile(
+      title: RichText(
+        text: TextSpan(
+          text: 'Product : ',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          children: [
+            TextSpan(text: product, style: TextStyle(fontWeight: FontWeight.normal)),
+          ],
+        ),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+            text: TextSpan(
+              text: 'Quantity : ',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              children: [
+                TextSpan(text: quantity, style: TextStyle(fontWeight: FontWeight.normal)),
+              ],
+            ),
+          ),
+          RichText(
+            text: TextSpan(
+              text: 'Description : ',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              children: [
+                TextSpan(text: description, style: TextStyle(fontWeight: FontWeight.normal)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 }
 
 void main() {

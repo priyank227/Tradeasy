@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math';
 import 'package:email_validator/email_validator.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -424,11 +423,6 @@ class _AddDataPageState extends State<AddDataPage> {
                 labelText: 'Quantity',
                 border: OutlineInputBorder(),
               ),
-              keyboardType: TextInputType.number, // Allow only numbers
-              inputFormatters: <TextInputFormatter>[
-                FilteringTextInputFormatter
-                    .digitsOnly // Restrict input to digits only
-              ],
             ),
           ),
           Padding(
@@ -572,7 +566,7 @@ class _AddDataPageState extends State<AddDataPage> {
 
     // Get current date
     DateTime now = DateTime.now();
-    String formattedDate = "${now.year}-${now.month}-${now.day}";
+    String formattedDate = "${now.year}-${_formatNumber(now.month)}-${_formatNumber(now.day)}";
 
     // Check if document already exists
     DocumentSnapshot documentSnapshot =
@@ -622,6 +616,11 @@ class _AddDataPageState extends State<AddDataPage> {
     );
   }
 }
+
+String _formatNumber(int number) {
+  return number.toString().padLeft(2, '0');
+}
+
 
 
   void main() {
