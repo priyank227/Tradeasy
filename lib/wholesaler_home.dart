@@ -53,9 +53,11 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
                   padding: const EdgeInsets.all(8.0),
                   child: Builder(
                     builder: (context) => IconButton(
-                      icon: Icon(Icons.menu, color: Color.fromARGB(255, 22, 82, 8)),
+                      icon: Icon(Icons.menu,
+                          color: Color.fromARGB(255, 22, 82, 8)),
                       onPressed: () {
-                        Scaffold.of(context).openDrawer(); // Open drawer on click
+                        Scaffold.of(context)
+                            .openDrawer(); // Open drawer on click
                       },
                     ),
                   ),
@@ -111,7 +113,8 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => WholesalerProfilePage(email: widget.email),
+                    builder: (context) =>
+                        WholesalerProfilePage(email: widget.email),
                   ),
                 );
               },
@@ -150,8 +153,130 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
   }
 
   Widget _buildDataPage() {
+    return FutureBuilder(
+      future: _fetchDataFromFirestore(),
+      builder: (context, AsyncSnapshot<String?> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (snapshot.hasData && snapshot.data != null) {
+          String? dataString = snapshot.data;
+
+          if (dataString == null || dataString.isEmpty) {
+            return Center(child: Text('Today has no data'));
+          }
+
+          List<String> dataSetList = dataString.split(' - ');
+
+          if (dataSetList.isEmpty) {
+            return Center(child: Text('Today has no data'));
+          }
+
+          List<Widget> dataCards = [];
+          for (int i = 0; i < dataSetList.length; i += 3) {
+            if (i + 2 < dataSetList.length) {
+              String product = dataSetList[i];
+              String quantity = dataSetList[i + 1];
+              String description = dataSetList[i + 2];
+              dataCards.add(_buildDataCard(product, quantity, description));
+              if (i != dataSetList.length - 3) {
+                dataCards.add(Divider());
+              }
+            }
+          }
+
+          return ListView(
+            padding: EdgeInsets.all(16.0),
+            children: dataCards,
+          );
+        } else {
+          return Center(child: Text('Today has no data'));
+        }
+      },
+    );
+  }
+
+  Future<String?> _fetchDataFromFirestore() async {
+    try {
+      String formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
+          .instance
+          .collection('export_data')
+          .doc(formattedDate)
+          .get();
+
+      if (snapshot.exists) {
+        // Get the data map
+        Map<String, dynamic> dataMap =
+            snapshot.data() as Map<String, dynamic>? ?? {};
+
+        // Extract the 'items' list from the data map
+        List<dynamic> itemsList = dataMap['items'] ?? [];
+
+        // Convert the items list to a string
+        String dataString = itemsList.join(' - ');
+
+        return dataString;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+      return null;
+    }
+  }
+
+  Widget _buildDataCard(String product, String quantity, String description) {
+    return Card(
+      elevation: 3,
+      margin: EdgeInsets.symmetric(vertical: 8.0),
+      child: ListTile(
+        title: RichText(
+          text: TextSpan(
+            text: 'Product : ',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            children: [
+              TextSpan(
+                  text: product,
+                  style: TextStyle(fontWeight: FontWeight.normal)),
+            ],
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RichText(
+              text: TextSpan(
+                text: 'Quantity : ',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                children: [
+                  TextSpan(
+                      text: quantity,
+                      style: TextStyle(fontWeight: FontWeight.normal)),
+                ],
+              ),
+            ),
+            RichText(
+              text: TextSpan(
+                text: 'Description : ',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                children: [
+                  TextSpan(
+                      text: description,
+                      style: TextStyle(fontWeight: FontWeight.normal)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPastDataPage() {
   return FutureBuilder(
-    future: _fetchDataFromFirestore(),
+    future: _fetchPastDataFromFirestore(),
     builder: (context, AsyncSnapshot<String?> snapshot) {
       if (snapshot.connectionState == ConnectionState.waiting) {
         return Center(child: CircularProgressIndicator());
@@ -161,13 +286,13 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
         String? dataString = snapshot.data;
 
         if (dataString == null || dataString.isEmpty) {
-          return Center(child: Text('Today has no data'));
+          return Center(child: Text('No past data available'));
         }
 
         List<String> dataSetList = dataString.split(' - ');
 
         if (dataSetList.isEmpty) {
-          return Center(child: Text('Today has no data'));
+          return Center(child: Text('No past data available'));
         }
 
         List<Widget> dataCards = [];
@@ -188,23 +313,28 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
           children: dataCards,
         );
       } else {
-        return Center(child: Text('Today has no data'));
+        return Center(child: Text('No past data available'));
       }
     },
   );
 }
 
-Future<String?> _fetchDataFromFirestore() async {
+Future<String?> _fetchPastDataFromFirestore() async {
   try {
-    String formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore.instance
+    // Get yesterday's date
+    DateTime yesterday = DateTime.now().subtract(Duration(days: 1));
+    String formattedDate = DateFormat('yyyy-MM-dd').format(yesterday);
+
+    DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
+        .instance
         .collection('export_data')
         .doc(formattedDate)
         .get();
 
     if (snapshot.exists) {
       // Get the data map
-      Map<String, dynamic> dataMap = snapshot.data() as Map<String, dynamic>? ?? {};
+      Map<String, dynamic> dataMap =
+          snapshot.data() as Map<String, dynamic>? ?? {};
 
       // Extract the 'items' list from the data map
       List<dynamic> itemsList = dataMap['items'] ?? [];
@@ -217,18 +347,11 @@ Future<String?> _fetchDataFromFirestore() async {
       return null;
     }
   } catch (e) {
-    print('Error fetching data: $e');
+    print('Error fetching past data: $e');
     return null;
   }
 }
 
-
-
-  Widget _buildPastDataPage() {
-    return Center(
-      child: Text('Past Data Page'),
-    );
-  }
 
   void _logout(BuildContext context) {
     showDialog(
@@ -247,7 +370,8 @@ Future<String?> _fetchDataFromFirestore() async {
             TextButton(
               onPressed: () {
                 // Perform logout operation
-                Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                Navigator.pushNamedAndRemoveUntil(
+                    context, '/', (route) => false);
               },
               child: Text("Yes"),
             ),
@@ -303,7 +427,8 @@ Future<String?> _fetchDataFromFirestore() async {
             ),
             ElevatedButton(
               onPressed: () {
-                _validateAndChangePassword(context, enteredEmail, newPassword, confirmPassword);
+                _validateAndChangePassword(
+                    context, enteredEmail, newPassword, confirmPassword);
               },
               child: Text("Save"),
             ),
@@ -313,27 +438,35 @@ Future<String?> _fetchDataFromFirestore() async {
     );
   }
 
-  void _validateAndChangePassword(BuildContext context, String enteredEmail, String newPassword, String confirmPassword) async {
+  void _validateAndChangePassword(BuildContext context, String enteredEmail,
+      String newPassword, String confirmPassword) async {
     if (enteredEmail == widget.email) {
       if (newPassword == confirmPassword) {
         try {
-          await FirebaseFirestore.instance.collection('wholesalers').doc(widget.email).update({
+          await FirebaseFirestore.instance
+              .collection('wholesalers')
+              .doc(widget.email)
+              .update({
             'password': newPassword,
           });
-          _showSnackBar(context, 'Password updated successfully', Colors.green); // Green color for success
+          _showSnackBar(context, 'Password updated successfully',
+              Colors.green); // Green color for success
           Timer(Duration(seconds: 2), () {
             Navigator.pop(context); // Close the dialog
             Navigator.pop(context); // Close the drawer
           });
         } catch (e) {
           print('Error updating password: $e');
-          _showSnackBar(context, 'Failed to update password', Colors.red); // Red color for error
+          _showSnackBar(context, 'Failed to update password',
+              Colors.red); // Red color for error
         }
       } else {
-        _showSnackBar(context, 'New password and confirm password do not match', Colors.red); // Red color for error
+        _showSnackBar(context, 'New password and confirm password do not match',
+            Colors.red); // Red color for error
       }
     } else {
-      _showSnackBar(context, 'Entered email does not match your email', Colors.red); // Red color for error
+      _showSnackBar(context, 'Entered email does not match your email',
+          Colors.red); // Red color for error
     }
   }
 
@@ -353,48 +486,6 @@ Future<String?> _fetchDataFromFirestore() async {
       Navigator.pop(context); // Close the drawer
     });
   }
-
-  Widget _buildDataCard(String product, String quantity, String description) {
-  return Card(
-    elevation: 3,
-    margin: EdgeInsets.symmetric(vertical: 8.0),
-    child: ListTile(
-      title: RichText(
-        text: TextSpan(
-          text: 'Product : ',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          children: [
-            TextSpan(text: product, style: TextStyle(fontWeight: FontWeight.normal)),
-          ],
-        ),
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          RichText(
-            text: TextSpan(
-              text: 'Quantity : ',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              children: [
-                TextSpan(text: quantity, style: TextStyle(fontWeight: FontWeight.normal)),
-              ],
-            ),
-          ),
-          RichText(
-            text: TextSpan(
-              text: 'Description : ',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              children: [
-                TextSpan(text: description, style: TextStyle(fontWeight: FontWeight.normal)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
 }
 
 void main() {
