@@ -99,10 +99,10 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
               },
             ),
             ListTile(
-              title: Text('Past Data'),
+              title: Text('Interested Data'),
               onTap: () {
                 setState(() {
-                  _currentPage = 'Past Data';
+                  _currentPage = 'Interested Data';
                 });
                 Navigator.pop(context); // Close drawer
               },
@@ -143,8 +143,8 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
     switch (_currentPage) {
       case 'Data':
         return _buildDataPage();
-      case 'Past Data':
-        return _buildPastDataPage();
+      case 'Interested Data':
+        return _buildInterestedDataPage();
       // case 'Profile':
       //   return WholesalerProfilePage(email: widget.email);
       default:
@@ -155,35 +155,41 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
   Widget _buildDataPage() {
     return FutureBuilder(
       future: _fetchDataFromFirestore(),
-      builder: (context, AsyncSnapshot<String?> snapshot) {
+      builder: (context, AsyncSnapshot<List<Map<String, dynamic>>?> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (snapshot.hasData && snapshot.data != null) {
-          String? dataString = snapshot.data;
-
-          if (dataString == null || dataString.isEmpty) {
-            return Center(child: Text('Today has no data'));
-          }
-
-          List<String> dataSetList = dataString.split(' - ');
-
-          if (dataSetList.isEmpty) {
-            return Center(child: Text('Today has no data'));
-          }
+        } else if (snapshot.hasData &&
+            snapshot.data != null &&
+            snapshot.data!.isNotEmpty) {
+          List<Map<String, dynamic>> allData = snapshot.data!;
 
           List<Widget> dataCards = [];
-          for (int i = 0; i < dataSetList.length; i += 3) {
-            if (i + 2 < dataSetList.length) {
-              String product = dataSetList[i];
-              String quantity = dataSetList[i + 1];
-              String description = dataSetList[i + 2];
-              dataCards.add(_buildDataCard(product, quantity, description));
-              if (i != dataSetList.length - 3) {
-                dataCards.add(Divider());
+          allData.forEach((dataMap) {
+            String date = dataMap['date'];
+            String dataString = dataMap['data'];
+            List<String> dataSetList = dataString.split(' - ');
+
+            if (dataSetList.isNotEmpty) {
+              dataCards.add(_buildDateHeader(date));
+              for (int i = 0; i < dataSetList.length; i += 3) {
+                if (i + 2 < dataSetList.length) {
+                  String product = dataSetList[i];
+                  String quantity = dataSetList[i + 1];
+                  String description = dataSetList[i + 2];
+                  dataCards.add(_buildDataCard(
+                      date, product, quantity, description, _name));
+                  if (i != dataSetList.length - 3) {
+                    dataCards.add(Divider());
+                  }
+                }
               }
             }
+          });
+
+          if (dataCards.isEmpty) {
+            return Center(child: Text('No data available'));
           }
 
           return ListView(
@@ -191,43 +197,47 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
             children: dataCards,
           );
         } else {
-          return Center(child: Text('Today has no data'));
+          return Center(child: Text('No data available'));
         }
       },
     );
   }
 
-  Future<String?> _fetchDataFromFirestore() async {
+  Widget _buildDateHeader(String date) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Text(
+        date,
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Future<List<Map<String, dynamic>>?> _fetchDataFromFirestore() async {
     try {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
-          .instance
-          .collection('export_data')
-          .doc(formattedDate)
-          .get();
+      QuerySnapshot<Map<String, dynamic>> querySnapshot =
+          await FirebaseFirestore.instance.collection('export_data').get();
 
-      if (snapshot.exists) {
-        // Get the data map
-        Map<String, dynamic> dataMap =
-            snapshot.data() as Map<String, dynamic>? ?? {};
+      List<Map<String, dynamic>> allData = [];
 
-        // Extract the 'items' list from the data map
+      // Iterate through documents and extract data along with document name (date)
+      querySnapshot.docs.forEach((document) {
+        String date = document.id; // Document name is the date
+        Map<String, dynamic> dataMap = document.data();
         List<dynamic> itemsList = dataMap['items'] ?? [];
-
-        // Convert the items list to a string
         String dataString = itemsList.join(' - ');
+        allData.add({'date': date, 'data': dataString});
+      });
 
-        return dataString;
-      } else {
-        return null;
-      }
+      return allData;
     } catch (e) {
       print('Error fetching data: $e');
       return null;
     }
   }
 
-  Widget _buildDataCard(String product, String quantity, String description) {
+  Widget _buildDataCard(String date, String product, String quantity,
+      String description, String name) {
     return Card(
       elevation: 3,
       margin: EdgeInsets.symmetric(vertical: 8.0),
@@ -268,90 +278,309 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
                 ],
               ),
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    _storeInterestedData(date, product, quantity, description, name);
+                  },
+                  child: Text('Get Interest'),
+                ),
+                SizedBox(width: 8),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPastDataPage() {
-  return FutureBuilder(
-    future: _fetchPastDataFromFirestore(),
-    builder: (context, AsyncSnapshot<String?> snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return Center(child: CircularProgressIndicator());
-      } else if (snapshot.hasError) {
-        return Center(child: Text('Error: ${snapshot.error}'));
-      } else if (snapshot.hasData && snapshot.data != null) {
-        String? dataString = snapshot.data;
+  void _storeInterestedData(String date, String product, String quantity, String description, String name) async {
+    try {
+      // Create the collection name dynamically with the wholesaler's name
+      String collectionName = 'interested_data_$name';
+      
+      // Get the Firestore instance and add the data to the collection
+      await FirebaseFirestore.instance.collection(collectionName).add({
+        'date': date,
+        'product': product,
+        'quantity': quantity,
+        'description': description,
+        'timestamp': Timestamp.now(),
+      });
 
-        if (dataString == null || dataString.isEmpty) {
-          return Center(child: Text('No past data available'));
+      // Show a snackbar to indicate success
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Data stored as interested'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      print('Error storing interested data: $e');
+      // Show a snackbar to indicate failure
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to store data as interested'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Widget _buildInterestedDataPage() {
+    return FutureBuilder(
+      future: _fetchInterestedData(),
+      builder: (context, AsyncSnapshot<List<Map<String, dynamic>>?> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (snapshot.hasData &&
+            snapshot.data != null &&
+            snapshot.data!.isNotEmpty) {
+          List<Map<String, dynamic>> interestedData = snapshot.data!;
+
+          return ListView.builder(
+            itemCount: interestedData.length,
+            itemBuilder: (context, index) {
+              String documentID = interestedData[index]['documentID'];
+              return Dismissible(
+                key: Key(documentID), // Use document ID as key
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  child: Icon(Icons.delete, color: Colors.white),
+                ),
+                onDismissed: (direction) {
+                  _removeInterestedData(documentID);
+                  setState(() {
+                    interestedData.removeAt(index);
+                  });
+                },
+                child: _buildInterestedDataCard(interestedData[index]),
+              );
+            },
+          );
+        } else {
+          return Center(child: Text('No interested data available'));
         }
+      },
+    );
+  }
 
-        List<String> dataSetList = dataString.split(' - ');
+  Future<List<Map<String, dynamic>>?> _fetchInterestedData() async {
+    try {
+      // Create the collection name dynamically with the wholesaler's name
+      String collectionName = 'interested_data_$_name';
 
-        if (dataSetList.isEmpty) {
-          return Center(child: Text('No past data available'));
-        }
+      // Get the interested data from Firestore
+      QuerySnapshot<Map<String, dynamic>> querySnapshot =
+          await FirebaseFirestore.instance.collection(collectionName).get();
 
-        List<Widget> dataCards = [];
-        for (int i = 0; i < dataSetList.length; i += 3) {
-          if (i + 2 < dataSetList.length) {
-            String product = dataSetList[i];
-            String quantity = dataSetList[i + 1];
-            String description = dataSetList[i + 2];
-            dataCards.add(_buildDataCard(product, quantity, description));
-            if (i != dataSetList.length - 3) {
-              dataCards.add(Divider());
-            }
-          }
-        }
+      List<Map<String, dynamic>> interestedData = [];
 
-        return ListView(
-          padding: EdgeInsets.all(16.0),
-          children: dataCards,
-        );
-      } else {
-        return Center(child: Text('No past data available'));
-      }
+      // Iterate through documents and extract data
+      querySnapshot.docs.forEach((document) {
+        Map<String, dynamic> data = document.data();
+        data['documentID'] = document.id; // Add document ID to the data
+        interestedData.add(data);
+      });
+
+      return interestedData;
+    } catch (e) {
+      print('Error fetching interested data: $e');
+      return null;
+    }
+  }
+
+  Widget _buildInterestedDataCard(Map<String, dynamic> data) {
+  String product = data['product'];
+  String quantity = data['quantity'];
+  String description = data['description'];
+  Timestamp timestamp = data['timestamp'];
+
+  DateTime dateTime = timestamp.toDate();
+  String formattedTimestamp =
+      DateFormat('d MMMM y, hh:mm a').format(dateTime);
+
+  return Card(
+    elevation: 3,
+    margin: EdgeInsets.symmetric(vertical: 8.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          title: RichText(
+            text: TextSpan(
+              text: 'Product : ',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              children: [
+                TextSpan(
+                    text: product,
+                    style: TextStyle(fontWeight: FontWeight.normal)),
+              ],
+            ),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RichText(
+                text: TextSpan(
+                  text: 'Quantity : ',
+                  style: TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                  children: [
+                    TextSpan(
+                        text: quantity,
+                        style: TextStyle(
+                            fontWeight: FontWeight.normal)),
+                  ],
+                ),
+              ),
+              RichText(
+                text: TextSpan(
+                  text: 'Description : ',
+                  style: TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                  children: [
+                    TextSpan(
+                        text: description,
+                        style: TextStyle(
+                            fontWeight: FontWeight.normal)),
+                  ],
+                ),
+              ),
+              Text(
+                'Date & Time : $formattedTimestamp',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  _showBidDialog(data);
+                },
+                child: Text('Bid'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+void _showBidDialog(Map<String, dynamic> data) {
+  String price = '';
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Place a Bid"),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              TextFormField(
+                onChanged: (value) {
+                  price = value;
+                },
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: 'Enter Price'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _submitBid(data, price);
+              Navigator.of(context).pop();
+            },
+            child: Text("Submit"),
+          ),
+        ],
+      );
     },
   );
 }
 
-Future<String?> _fetchPastDataFromFirestore() async {
+void _submitBid(Map<String, dynamic> data, String price) async {
   try {
-    // Get yesterday's date
-    DateTime yesterday = DateTime.now().subtract(Duration(days: 1));
-    String formattedDate = DateFormat('yyyy-MM-dd').format(yesterday);
+    // Create the collection name dynamically with the wholesaler's name
+    String collectionName = 'bid';
 
-    DocumentSnapshot<Map<String, dynamic>> snapshot = await FirebaseFirestore
-        .instance
-        .collection('export_data')
-        .doc(formattedDate)
-        .get();
+    // Use product name as document ID
+    String productName = data['product'];
 
-    if (snapshot.exists) {
-      // Get the data map
-      Map<String, dynamic> dataMap =
-          snapshot.data() as Map<String, dynamic>? ?? {};
+    // Get the Firestore instance and add the bid to the collection
+    await FirebaseFirestore.instance.collection(collectionName).doc(productName).set({
+      'wholesaler_name': _name,
+      'wholesaler_email': widget.email,
+      'product': data['product'],
+      'quantity': data['quantity'],
+      'description': data['description'],
+      'price': price,
+      'timestamp': Timestamp.now(),
+    });
 
-      // Extract the 'items' list from the data map
-      List<dynamic> itemsList = dataMap['items'] ?? [];
-
-      // Convert the items list to a string
-      String dataString = itemsList.join(' - ');
-
-      return dataString;
-    } else {
-      return null;
-    }
+    // Show a snackbar to indicate success
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Bid placed successfully'),
+        backgroundColor: Colors.green,
+      ),
+    );
   } catch (e) {
-    print('Error fetching past data: $e');
-    return null;
+    print('Error placing bid: $e');
+    // Show a snackbar to indicate failure
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Failed to place bid'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 }
 
+
+  void _removeInterestedData(String documentID) async {
+    try {
+      String collectionName = 'interested_data_$_name';
+      await FirebaseFirestore.instance.collection(collectionName).doc(documentID).delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Data removed from interested'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      print('Error removing interested data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to remove data from interested'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   void _logout(BuildContext context) {
     showDialog(

@@ -58,52 +58,93 @@ class _AgentHomePageState extends State<AgentHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background Image
-          Positioned.fill(
-            child: Image.asset(
-              '../Assets/background.png',
-              fit: BoxFit.cover,
+      appBar: AppBar(),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Color.fromARGB(255, 22, 82, 8),
+              ),
+              child: Text(
+                'Welcome, Agent!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                ),
+              ),
             ),
-          ),
-          Center(
-            child: _selectedIndex == 0
-                ? _buildHomePage()
-                : _widgetOptions.elementAt(_selectedIndex),
-          ),
-          // Logout button
-          Positioned(
-            top: 20,
-            right: 20,
-            child: IconButton(
-              icon: Icon(Icons.logout),
-              onPressed: _logout,
-              color: Color.fromARGB(255, 22, 82, 8),
+            ListTile(
+              leading: Icon(Icons.person),
+              title: Text('Wholesalers List'),
+              onTap: () {
+                setState(() {
+                  _selectedIndex = 0;
+                  Navigator.pop(context);
+                });
+              },
             ),
-          ),
-        ],
+            ListTile(
+              leading: Icon(Icons.money),
+              title: Text('Bid Data'),
+              onTap: () {
+                setState(() {
+                  _selectedIndex = 3;
+                  Navigator.pop(context);
+                });
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.add),
+              title: Text('Add Wholesaler'),
+              onTap: () {
+                setState(() {
+                  _selectedIndex = 1;
+                  Navigator.pop(context);
+                });
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.add),
+              title: Text('Add Data'),
+              onTap: () {
+                setState(() {
+                  _selectedIndex = 2;
+                  Navigator.pop(context);
+                });
+              },
+            ),
+            Divider(
+              color: Colors.black,
+              thickness: 1,
+              height: 20,
+              indent: 20,
+              endIndent: 20,
+            ),
+            ListTile(
+              leading: Icon(Icons.logout),
+              title: Text('Logout'),
+              onTap: () {
+                _logout();
+              },
+            ),
+          ],
+        ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Wholesalers List',
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(
+                "../Assets/background.png"), // Change this to your image path
+            fit: BoxFit.cover,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add),
-            label: 'Add Wholesaler',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add),
-            label: 'Add Data',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color.fromARGB(255, 242, 242, 242),
-        onTap: _onItemTapped,
-        backgroundColor:
-            Color.fromARGB(255, 22, 82, 8), // Make the background transparent
+        ),
+        child: Center(
+          child: _selectedIndex == 0
+              ? _buildHomePage()
+              : _widgetOptions.elementAt(_selectedIndex),
+        ),
       ),
     );
   }
@@ -184,6 +225,7 @@ class _AgentHomePageState extends State<AgentHomePage> {
     Text('Home Page'),
     AddWholesalerPage(firestore: FirebaseFirestore.instance),
     AddDataPage(),
+    BidDetailsPage(firestore: FirebaseFirestore.instance),
   ];
 }
 
@@ -353,17 +395,16 @@ class _AddWholesalerPageState extends State<AddWholesalerPage> {
   }
 
   void _storeWholesalerData(
-  FirebaseFirestore firestore, String email, String password) {
-  firestore.collection('wholesalers').doc(email).set({
-    'email': email,
-    'password': password,
-  }).then((value) {
-    print('Wholesaler data stored successfully');
-  }).catchError((error) {
-    print('Failed to store wholesaler data: $error');
-  });
-}
-
+      FirebaseFirestore firestore, String email, String password) {
+    firestore.collection('wholesalers').doc(email).set({
+      'email': email,
+      'password': password,
+    }).then((value) {
+      print('Wholesaler data stored successfully');
+    }).catchError((error) {
+      print('Failed to store wholesaler data: $error');
+    });
+  }
 }
 
 class AddDataPage extends StatefulWidget {
@@ -469,12 +510,13 @@ class _AddDataPageState extends State<AddDataPage> {
     );
   }
 
-  void _addItem() {
-    setState(() {
-      String product = _bigTextFieldController.text;
-      String quantity = _smallTextFieldController.text;
-      String description = _descriptionController.text;
+ void _addItem() {
+  String product = _bigTextFieldController.text.trim();
+  String quantity = _smallTextFieldController.text.trim();
+  String description = _descriptionController.text.trim();
 
+  if (product.isNotEmpty && quantity.isNotEmpty && description.isNotEmpty) {
+    setState(() {
       String newItem = '$product - $quantity - $description';
       _addedItems.add(newItem);
 
@@ -485,7 +527,15 @@ class _AddDataPageState extends State<AddDataPage> {
       _smallTextFieldController.clear();
       _descriptionController.clear();
     });
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Please enter all information.'),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
+}
 
   void _removeItem(int index) {
     setState(() {
@@ -560,77 +610,164 @@ class _AddDataPageState extends State<AddDataPage> {
   }
 
  void _sendDataToFirestore() async {
-  try {
-    CollectionReference exportDataCollection =
-        FirebaseFirestore.instance.collection('export_data');
+  if (_addedItems.isNotEmpty) {
+    try {
+      CollectionReference exportDataCollection =
+          FirebaseFirestore.instance.collection('export_data');
 
-    // Get current date
-    DateTime now = DateTime.now();
-    String formattedDate = "${now.year}-${_formatNumber(now.month)}-${_formatNumber(now.day)}";
+      // Get current date
+      DateTime now = DateTime.now();
+      String formattedDate =
+          "${now.year}-${_formatNumber(now.month)}-${_formatNumber(now.day)}";
 
-    // Check if document already exists
-    DocumentSnapshot documentSnapshot =
-        await exportDataCollection.doc(formattedDate).get();
+      // Check if document already exists
+      DocumentSnapshot documentSnapshot =
+          await exportDataCollection.doc(formattedDate).get();
 
-    // If document doesn't exist, create a new one with current items
-    if (!documentSnapshot.exists) {
-      await exportDataCollection.doc(formattedDate).set({
-        'items': _addedItems,
+      // If document doesn't exist, create a new one with current items
+      if (!documentSnapshot.exists) {
+        await exportDataCollection.doc(formattedDate).set({
+          'items': _addedItems,
+        });
+      } else {
+        // If document exists, get existing items and append new items
+        List<dynamic>? existingItems = documentSnapshot.get('items');
+        List<dynamic> updatedItems = List.from(existingItems ?? [])
+          ..addAll(_addedItems);
+
+        // Update the document with the updated items
+        await exportDataCollection.doc(formattedDate).update({
+          'items': updatedItems,
+        });
+      }
+
+      // Show a snackbar to indicate success
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Data sent to Firestore successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Clear added items list after sending data
+      setState(() {
+        _addedItems.clear();
       });
-    } else {
-      // If document exists, get existing items and append new items
-      List<dynamic>? existingItems = documentSnapshot.get('items');
-      List<dynamic> updatedItems =
-          List.from(existingItems ?? [])..addAll(_addedItems);
 
-      // Update the document with the updated items
-      await exportDataCollection.doc(formattedDate).update({
-        'items': updatedItems,
-      });
+      // Clear SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('addedItems');
+    } catch (error) {
+      print('Error sending data to Firestore: $error');
+      // Show a snackbar to indicate error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send data to Firestore. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
-
-    // Show a snackbar to indicate success
+  } else {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Data sent to Firestore successfully!'),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-    // Clear added items list after sending data
-    setState(() {
-      _addedItems.clear();
-    });
-
-    // Clear SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('addedItems');
-  } catch (error) {
-    print('Error sending data to Firestore: $error');
-    // Show a snackbar to indicate error
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Failed to send data to Firestore. Please try again.'),
+        content: Text('No items to send. Please add items first.'),
         backgroundColor: Colors.red,
       ),
     );
   }
 }
 
-String _formatNumber(int number) {
-  return number.toString().padLeft(2, '0');
-}
 
-
-
-  void main() {
-    runApp(MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('Add Data Page'),
-        ),
-        body: AddDataPage(),
-      ),
-    ));
+  String _formatNumber(int number) {
+    return number.toString().padLeft(2, '0');
   }
 }
+
+class BidDetailsPage extends StatelessWidget {
+  final FirebaseFirestore firestore;
+
+  BidDetailsPage({required this.firestore});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: firestore.collection('bid').snapshots(),
+      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        // Extract the documents from the snapshot and map them to a list of widgets
+        List<Widget> bidList =
+            snapshot.data!.docs.map((DocumentSnapshot document) {
+          Map<String, dynamic>? data = document.data() as Map<String, dynamic>?;
+
+          // Access the fields in the data map
+          String bidId = document.id;
+          String description = data?['description'] ?? '';
+          String price = data?['price'] ?? '';
+          String product = data?['product'] ?? '';
+          String quantity = data?['quantity'] ?? '';
+          Timestamp timestamp = data?['timestamp'] ?? '';
+          String wholesalerEmail = data?['wholesaler_email'] ?? '';
+          String wholesalerName = data?['wholesaler_name'] ?? '';
+
+          // Convert timestamp to DateTime
+          DateTime dateTime = timestamp.toDate();
+
+          // Create a card widget to display the bid details
+          return Card(
+            elevation: 3,
+            margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildAttributeItem('product', bidId),
+                  _buildAttributeItem('Description', description),
+                  _buildAttributeItem('Product', product),
+                  _buildAttributeItem('Quantity', quantity),
+                  _buildAttributeItem('Date & Time', dateTime.toString()),
+                  //space
+                  SizedBox(height: 10),
+                  _buildAttributeItem('Wholesaler Email', wholesalerEmail),
+                  _buildAttributeItem('Wholesaler Name', wholesalerName),
+                  _buildAttributeItem('Price', price),
+                ],
+              ),
+            ),
+          );
+        }).toList();
+
+        // Return a ListView to display the list of Card widgets
+        return ListView(
+          children: bidList,
+        );
+      },
+    );
+  }
+
+  Widget _buildAttributeItem(String key, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$key: ',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
