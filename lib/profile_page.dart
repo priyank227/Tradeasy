@@ -155,7 +155,7 @@ class _WholesalerProfilePageState extends State<WholesalerProfilePage> {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("../assets/background.png"),
+                image: AssetImage("Assets/background.png"),
                 fit: BoxFit.cover,
               ),
             ),

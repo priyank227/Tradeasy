@@ -39,7 +39,7 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("../Assets/background.png"),
+                image: AssetImage("Assets/background.png"),
                 fit: BoxFit.cover,
               ),
             ),
@@ -240,44 +240,52 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
       String description, String name) {
     return Card(
       elevation: 3,
-      margin: EdgeInsets.symmetric(vertical: 8.0),
-      child: ListTile(
-        title: RichText(
-          text: TextSpan(
-            text: 'Product : ',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            children: [
-              TextSpan(
-                  text: product,
-                  style: TextStyle(fontWeight: FontWeight.normal)),
-            ],
-          ),
-        ),
-        subtitle: Column(
+      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             RichText(
               text: TextSpan(
-                text: 'Quantity : ',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                text: 'Product : ',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold , color : Colors.black
+                ),
                 children: [
                   TextSpan(
-                      text: quantity,
-                      style: TextStyle(fontWeight: FontWeight.normal)),
+                    text: product,
+                    style: TextStyle(fontWeight: FontWeight.normal, color : Colors.black),
+                  ),
                 ],
               ),
             ),
+            SizedBox(height: 8),
+            RichText(
+              text: TextSpan(
+                text: 'Quantity : ',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color : Colors.black),
+                children: [
+                  TextSpan(
+                    text: quantity,
+                    style: TextStyle(fontWeight: FontWeight.normal, color : Colors.black),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 8),
             RichText(
               text: TextSpan(
                 text: 'Description : ',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color : Colors.black),
                 children: [
                   TextSpan(
-                      text: description,
-                      style: TextStyle(fontWeight: FontWeight.normal)),
+                    text: description,
+                    style: TextStyle(fontWeight: FontWeight.normal, color : Colors.black),
+                  ),
                 ],
               ),
             ),
+            SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -295,6 +303,7 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
       ),
     );
   }
+
 
   void _storeInterestedData(String date, String product, String quantity, String description, String name) async {
     try {
@@ -408,62 +417,57 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
 
   return Card(
     elevation: 3,
-    margin: EdgeInsets.symmetric(vertical: 8.0),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ListTile(
-          title: RichText(
+    margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
             text: TextSpan(
               text: 'Product : ',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color : Colors.black),
               children: [
                 TextSpan(
-                    text: product,
-                    style: TextStyle(fontWeight: FontWeight.normal)),
+                  text: product,
+                  style: TextStyle(fontWeight: FontWeight.normal,color : Colors.black),
+                ),
               ],
             ),
           ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RichText(
-                text: TextSpan(
-                  text: 'Quantity : ',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                  children: [
-                    TextSpan(
-                        text: quantity,
-                        style: TextStyle(
-                            fontWeight: FontWeight.normal)),
-                  ],
+          SizedBox(height: 8),
+          RichText(
+            text: TextSpan(
+              text: 'Quantity : ',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color : Colors.black),
+              children: [
+                TextSpan(
+                  text: quantity,
+                  style: TextStyle(fontWeight: FontWeight.normal,color : Colors.black),
                 ),
-              ),
-              RichText(
-                text: TextSpan(
-                  text: 'Description : ',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                  children: [
-                    TextSpan(
-                        text: description,
-                        style: TextStyle(
-                            fontWeight: FontWeight.normal)),
-                  ],
-                ),
-              ),
-              Text(
-                'Date & Time : $formattedTimestamp',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
+          SizedBox(height: 8),
+          RichText(
+            text: TextSpan(
+              text: 'Description : ',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color : Colors.black),
+              children: [
+                TextSpan(
+                  text: description,
+                  style: TextStyle(fontWeight: FontWeight.normal,color : Colors.black),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Date & Time : $formattedTimestamp',
+            style: TextStyle(fontWeight: FontWeight.bold,),
+          ),
+          SizedBox(height: 8),
+          Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               ElevatedButton(
@@ -474,11 +478,12 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
               ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }
+
 
 void _showBidDialog(Map<String, dynamic> data) {
   String price = '';

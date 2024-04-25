@@ -27,7 +27,7 @@ class _WholesalerRegistrationPageState
         children: [
           Positioned.fill(
             child: Image.asset(
-              '../Assets/background.png',
+              'Assets/background.png',
               fit: BoxFit.cover,
             ),
           ),

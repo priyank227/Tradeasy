@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tradeasy/home_page.dart';
 import 'package:tradeasy/wholesaler_home.dart';
 import 'package:tradeasy/wholesaler_registration.dart'; // Update with correct import
@@ -19,7 +19,7 @@ class _LoginPageState extends State<LoginPage>
   TextEditingController _wholesalerPasswordController = TextEditingController();
   final _agentFormKey = GlobalKey<FormState>();
   final _wholesalerFormKey = GlobalKey<FormState>();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // final FirebaseAuth _auth = FirebaseAuth.instance;
   String? _errorMessage;
   String? _wholesalerErrorMessage; // New variable to hold wholesaler error message
   bool _agentPasswordVisible = false;
@@ -36,51 +36,54 @@ class _LoginPageState extends State<LoginPage>
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          Image.asset(
-            '../Assets/background.png',
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            fit: BoxFit.cover,
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  'Welcome to Tradeasy',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 20),
-                TabBar(
-                  controller: _tabController,
-                  indicatorColor: Color.fromARGB(255, 22, 82, 8),
-                  tabs: [
-                    Tab(text: 'Agent'),
-                    Tab(text: 'Wholesaler'),
-                  ],
-                ),
-                SizedBox(height: 10),
-                Expanded(
-                  child: TabBarView(
+      body: Container(
+        color: Colors.transparent,
+        child: Stack(
+          children: [
+            Image.asset(
+              'Assets/background.png', // Adjusted image asset path
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              fit: BoxFit.cover, // Ensure the image covers the entire screen
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    'Welcome to Tradeasy',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 20),
+                  TabBar(
                     controller: _tabController,
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildAgentSignInForm(),
-                        ],
-                      ),
-                      _buildWholesalerLoginForm(),
+                    indicatorColor: Color.fromARGB(255, 22, 82, 8),
+                    tabs: [
+                      Tab(text: 'Agent'),
+                      Tab(text: 'Wholesaler'),
                     ],
                   ),
-                ),
-              ],
+                  SizedBox(height: 10),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildAgentSignInForm(),
+                          ],
+                        ),
+                        _buildWholesalerLoginForm(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

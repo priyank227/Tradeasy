@@ -136,7 +136,7 @@ class _AgentHomePageState extends State<AgentHomePage> {
         decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage(
-                "../Assets/background.png"), // Change this to your image path
+                "Assets/background.png"), // Change this to your image path
             fit: BoxFit.cover,
           ),
         ),
