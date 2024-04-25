@@ -701,52 +701,50 @@ class BidDetailsPage extends StatelessWidget {
           return Center(child: CircularProgressIndicator());
         }
 
-        // Extract the documents from the snapshot and map them to a list of widgets
-        List<Widget> bidList =
-            snapshot.data!.docs.map((DocumentSnapshot document) {
-          Map<String, dynamic>? data = document.data() as Map<String, dynamic>?;
-
-          // Access the fields in the data map
-          String bidId = document.id;
-          String description = data?['description'] ?? '';
-          String price = data?['price'] ?? '';
-          String product = data?['product'] ?? '';
-          String quantity = data?['quantity'] ?? '';
-          Timestamp timestamp = data?['timestamp'] ?? '';
-          String wholesalerEmail = data?['wholesaler_email'] ?? '';
-          String wholesalerName = data?['wholesaler_name'] ?? '';
-
-          // Convert timestamp to DateTime
-          DateTime dateTime = timestamp.toDate();
-
-          // Create a card widget to display the bid details
-          return Card(
-            elevation: 3,
-            margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildAttributeItem('product', bidId),
-                  _buildAttributeItem('Description', description),
-                  _buildAttributeItem('Product', product),
-                  _buildAttributeItem('Quantity', quantity),
-                  _buildAttributeItem('Date & Time', dateTime.toString()),
-                  //space
-                  SizedBox(height: 10),
-                  _buildAttributeItem('Wholesaler Email', wholesalerEmail),
-                  _buildAttributeItem('Wholesaler Name', wholesalerName),
-                  _buildAttributeItem('Price', price),
-                ],
-              ),
-            ),
-          );
-        }).toList();
-
-        // Return a ListView to display the list of Card widgets
         return ListView(
-          children: bidList,
+          children: snapshot.data!.docs.map((DocumentSnapshot document) {
+            Map<String, dynamic>? data = document.data() as Map<String, dynamic>?;
+
+            String bidId = document.id;
+            String description = data?['description'] ?? '';
+            String price = data?['price'] ?? '';
+            String product = data?['product'] ?? '';
+            String quantity = data?['quantity'] ?? '';
+            Timestamp timestamp = data?['timestamp'] ?? '';
+            String wholesalerEmail = data?['wholesaler_email'] ?? '';
+            String wholesalerName = data?['wholesaler_name'] ?? '';
+            DateTime dateTime = timestamp.toDate();
+
+            return Card(
+              elevation: 3,
+              margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildAttributeItem('Product', product),
+                    _buildAttributeItem('Description', description),
+                    _buildAttributeItem('Quantity', quantity),
+                    _buildAttributeItem('Date & Time', dateTime.toString()),
+                    SizedBox(height: 10),
+                    _buildAttributeItem('Wholesaler Email', wholesalerEmail),
+                    _buildAttributeItem('Wholesaler Name', wholesalerName),
+                    _buildAttributeItem('Price', price),
+                    SizedBox(height: 10),
+                    // Delete button
+                    ElevatedButton(
+                      onPressed: () {
+                        // Remove the document from Firestore
+                        firestore.collection('bid').doc(bidId).delete();
+                      },
+                      child: Text('Delete'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
         );
       },
     );
@@ -770,4 +768,3 @@ class BidDetailsPage extends StatelessWidget {
     );
   }
 }
-
