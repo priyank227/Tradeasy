@@ -4,6 +4,7 @@ import 'package:tradeasy/home_page.dart';
 import 'package:tradeasy/wholesaler_home.dart';
 import 'package:tradeasy/wholesaler_registration.dart'; // Update with correct import
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -12,6 +13,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage>
     with SingleTickerProviderStateMixin {
+
   late TabController _tabController;
   TextEditingController _agentEmailController = TextEditingController();
   TextEditingController _agentPasswordController = TextEditingController();
@@ -21,7 +23,8 @@ class _LoginPageState extends State<LoginPage>
   final _wholesalerFormKey = GlobalKey<FormState>();
   // final FirebaseAuth _auth = FirebaseAuth.instance;
   String? _errorMessage;
-  String? _wholesalerErrorMessage; // New variable to hold wholesaler error message
+  String?
+      _wholesalerErrorMessage; // New variable to hold wholesaler error message
   bool _agentPasswordVisible = false;
   bool _wholesalerPasswordVisible = false;
 
@@ -29,55 +32,77 @@ class _LoginPageState extends State<LoginPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _checkLoginStatus();
   }
+
+  _checkLoginStatus() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool agentLoggedIn = prefs.getBool('agentLoggedIn') ?? false;
+  bool wholesalerLoggedIn = prefs.getBool('wholesalerLoggedIn') ?? false;
+
+  if (agentLoggedIn) {
+    // Navigate to agent home page
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => AgentHomePage()),
+    );
+  } else if (wholesalerLoggedIn) {
+    // Navigate to wholesaler home page
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WholesalerHomePage(email: _wholesalerEmailController.text,),
+      ),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.transparent,
-      body: Container(
-        color: Colors.transparent,
-        child: Stack(
-          children: [
-            Image.asset(
-              'Assets/background.png', // Adjusted image asset path
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height,
-              fit: BoxFit.cover, // Ensure the image covers the entire screen
+  resizeToAvoidBottomInset: true, // Set to true to resize the UI when keyboard is displayed
+  backgroundColor: Colors.transparent,
+  body: Stack(
+    children: [
+      Image.asset(
+        'Assets/background.png',
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height,
+        fit: BoxFit.cover,
+      ),
+      Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              'Welcome to Tradeasy',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    'Welcome to Tradeasy',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 20),
-                  TabBar(
-                    controller: _tabController,
-                    indicatorColor: Color.fromARGB(255, 22, 82, 8),
-                    tabs: [
-                      Tab(text: 'Agent'),
-                      Tab(text: 'Wholesaler'),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
+            SizedBox(height: 20),
+            TabBar(
+              controller: _tabController,
+              indicatorColor: Color.fromARGB(255, 22, 82, 8),
+              tabs: [
+                Tab(text: 'Agent'),
+                Tab(text: 'Wholesaler'),
+              ],
+            ),
+            SizedBox(height: 120),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildAgentSignInForm(),
-                          ],
-                        ),
-                        _buildWholesalerLoginForm(),
+                        _buildAgentSignInForm(),
                       ],
                     ),
+                  ),
+                  SingleChildScrollView(
+                    child: _buildWholesalerLoginForm(),
                   ),
                 ],
               ),
@@ -85,7 +110,10 @@ class _LoginPageState extends State<LoginPage>
           ],
         ),
       ),
-    );
+    ],
+  ),
+);
+
   }
 
   Widget _buildAgentSignInForm() {
@@ -146,6 +174,9 @@ class _LoginPageState extends State<LoginPage>
                 final password = _agentPasswordController.text.trim();
                 if (email == 'priyankviradiya227@gmail.com' &&
                     password == 'Pri@2004') {
+                  SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
+                  prefs.setBool('agentLoggedIn', true);
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => AgentHomePage()),
@@ -241,11 +272,16 @@ class _LoginPageState extends State<LoginPage>
                   bool isValidWholesaler =
                       await _validateWholesalerCredentials(email, password);
                   if (isValidWholesaler) {
+                    SharedPreferences prefs =
+                        await SharedPreferences.getInstance();
+                    prefs.setBool('wholesalerLoggedIn', true);
                     // Navigate to wholesaler page after successful login
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => WholesalerHomePage(email: email,),
+                        builder: (context) => WholesalerHomePage(
+                          email: email,
+                        ),
                       ),
                     );
                   } else {

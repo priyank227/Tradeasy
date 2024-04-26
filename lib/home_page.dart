@@ -29,31 +29,40 @@ class _AgentHomePageState extends State<AgentHomePage> {
   }
 
   void _logout() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Confirm Logout"),
-          content: Text("Are you sure you want to logout?"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("No"),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pushReplacementNamed(
-                    context, '/'); // Navigate directly to the login page
-              },
-              child: Text("Yes"),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Confirm Logout"),
+        content: Text("Are you sure you want to logout?"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Dismiss the dialog
+            },
+            child: Text("No"),
+          ),
+          TextButton(
+            onPressed: () {
+              _clearPreferencesAndNavigateToLogin(); // Call method to clear preferences and navigate to login page
+            },
+            child: Text("Yes"),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void _clearPreferencesAndNavigateToLogin() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.remove('agentLoggedIn');
+  prefs.remove('wholesalerLoggedIn');
+  
+  // Navigate back to the login page
+  Navigator.pushReplacementNamed(context, '/');
+}
+
 
   @override
   Widget build(BuildContext context) {

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart'; // Import for date formatting
+import 'package:intl/intl.dart'; 
 import 'package:tradeasy/profile_page.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WholesalerHomePage extends StatefulWidget {
   final String email;
@@ -23,13 +24,24 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
     _extractName();
   }
 
-  void _extractName() {
+  void _extractName() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? storedName = prefs.getString('name');
+  if (storedName != null && storedName.isNotEmpty) {
+    setState(() {
+      _name = storedName;
+    });
+  } else {
     // Extract name from email address
     List<String> parts = widget.email.split('@');
     setState(() {
       _name = parts[0];
     });
+    // Store the name in shared preferences
+    await prefs.setString('name', _name);
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -249,12 +261,15 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
             RichText(
               text: TextSpan(
                 text: 'Product : ',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold , color : Colors.black
-                ),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
                 children: [
                   TextSpan(
                     text: product,
-                    style: TextStyle(fontWeight: FontWeight.normal, color : Colors.black),
+                    style: TextStyle(
+                        fontWeight: FontWeight.normal, color: Colors.black),
                   ),
                 ],
               ),
@@ -263,11 +278,15 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
             RichText(
               text: TextSpan(
                 text: 'Quantity : ',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color : Colors.black),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
                 children: [
                   TextSpan(
                     text: quantity,
-                    style: TextStyle(fontWeight: FontWeight.normal, color : Colors.black),
+                    style: TextStyle(
+                        fontWeight: FontWeight.normal, color: Colors.black),
                   ),
                 ],
               ),
@@ -276,11 +295,15 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
             RichText(
               text: TextSpan(
                 text: 'Description : ',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color : Colors.black),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
                 children: [
                   TextSpan(
                     text: description,
-                    style: TextStyle(fontWeight: FontWeight.normal, color : Colors.black),
+                    style: TextStyle(
+                        fontWeight: FontWeight.normal, color: Colors.black),
                   ),
                 ],
               ),
@@ -291,7 +314,8 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    _storeInterestedData(date, product, quantity, description, name);
+                    _storeInterestedData(
+                        date, product, quantity, description, name);
                   },
                   child: Text('Get Interest'),
                 ),
@@ -304,12 +328,12 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
     );
   }
 
-
-  void _storeInterestedData(String date, String product, String quantity, String description, String name) async {
+  void _storeInterestedData(String date, String product, String quantity,
+      String description, String name) async {
     try {
       // Create the collection name dynamically with the wholesaler's name
       String collectionName = 'interested_data_$name';
-      
+
       // Get the Firestore instance and add the data to the collection
       await FirebaseFirestore.instance.collection(collectionName).add({
         'date': date,
@@ -406,170 +430,188 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
   }
 
   Widget _buildInterestedDataCard(Map<String, dynamic> data) {
-  String product = data['product'];
-  String quantity = data['quantity'];
-  String description = data['description'];
-  Timestamp timestamp = data['timestamp'];
+    String product = data['product'];
+    String quantity = data['quantity'];
+    String description = data['description'];
+    Timestamp timestamp = data['timestamp'];
 
-  DateTime dateTime = timestamp.toDate();
-  String formattedTimestamp =
-      DateFormat('d MMMM y, hh:mm a').format(dateTime);
+    DateTime dateTime = timestamp.toDate();
+    String formattedTimestamp =
+        DateFormat('d MMMM y, hh:mm a').format(dateTime);
 
-  return Card(
-    elevation: 3,
-    margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-    child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          RichText(
-            text: TextSpan(
-              text: 'Product : ',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color : Colors.black),
-              children: [
-                TextSpan(
-                  text: product,
-                  style: TextStyle(fontWeight: FontWeight.normal,color : Colors.black),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 8),
-          RichText(
-            text: TextSpan(
-              text: 'Quantity : ',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color : Colors.black),
-              children: [
-                TextSpan(
-                  text: quantity,
-                  style: TextStyle(fontWeight: FontWeight.normal,color : Colors.black),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 8),
-          RichText(
-            text: TextSpan(
-              text: 'Description : ',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color : Colors.black),
-              children: [
-                TextSpan(
-                  text: description,
-                  style: TextStyle(fontWeight: FontWeight.normal,color : Colors.black),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Date & Time : $formattedTimestamp',
-            style: TextStyle(fontWeight: FontWeight.bold,),
-          ),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  _showBidDialog(data);
-                },
-                child: Text('Bid'),
+    return Card(
+      elevation: 3,
+      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RichText(
+              text: TextSpan(
+                text: 'Product : ',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
+                children: [
+                  TextSpan(
+                    text: product,
+                    style: TextStyle(
+                        fontWeight: FontWeight.normal, color: Colors.black),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-
-void _showBidDialog(Map<String, dynamic> data) {
-  String price = '';
-
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text("Place a Bid"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              TextFormField(
-                onChanged: (value) {
-                  price = value;
-                },
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: 'Enter Price'),
+            ),
+            SizedBox(height: 8),
+            RichText(
+              text: TextSpan(
+                text: 'Quantity : ',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
+                children: [
+                  TextSpan(
+                    text: quantity,
+                    style: TextStyle(
+                        fontWeight: FontWeight.normal, color: Colors.black),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            SizedBox(height: 8),
+            RichText(
+              text: TextSpan(
+                text: 'Description : ',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
+                children: [
+                  TextSpan(
+                    text: description,
+                    style: TextStyle(
+                        fontWeight: FontWeight.normal, color: Colors.black),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Date & Time : $formattedTimestamp',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    _showBidDialog(data);
+                  },
+                  child: Text('Bid'),
+                ),
+              ],
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              _submitBid(data, price);
-              Navigator.of(context).pop();
-            },
-            child: Text("Submit"),
-          ),
-        ],
-      );
-    },
-  );
-}
-
-void _submitBid(Map<String, dynamic> data, String price) async {
-  try {
-    // Create the collection name dynamically with the wholesaler's name
-    String collectionName = 'bid';
-
-    // Use product name as document ID
-    String productName = data['product'];
-
-    // Get the Firestore instance and add the bid to the collection
-    await FirebaseFirestore.instance.collection(collectionName).doc(productName).set({
-      'wholesaler_name': _name,
-      'wholesaler_email': widget.email,
-      'product': data['product'],
-      'quantity': data['quantity'],
-      'description': data['description'],
-      'price': price,
-      'timestamp': Timestamp.now(),
-    });
-
-    // Show a snackbar to indicate success
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Bid placed successfully'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  } catch (e) {
-    print('Error placing bid: $e');
-    // Show a snackbar to indicate failure
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Failed to place bid'),
-        backgroundColor: Colors.red,
       ),
     );
   }
-}
 
+  void _showBidDialog(Map<String, dynamic> data) {
+    String price = '';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Place a Bid"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextFormField(
+                  onChanged: (value) {
+                    price = value;
+                  },
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: 'Enter Price'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _submitBid(data, price);
+                Navigator.of(context).pop();
+              },
+              child: Text("Submit"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _submitBid(Map<String, dynamic> data, String price) async {
+    try {
+      // Create the collection name dynamically with the wholesaler's name
+      String collectionName = 'bid';
+
+      // Use product name as document ID
+      String productName = data['product'];
+
+      // Get the Firestore instance and add the bid to the collection
+      await FirebaseFirestore.instance
+          .collection(collectionName)
+          .doc(productName)
+          .set({
+        'wholesaler_name': _name,
+        'wholesaler_email': widget.email,
+        'product': data['product'],
+        'quantity': data['quantity'],
+        'description': data['description'],
+        'price': price,
+        'timestamp': Timestamp.now(),
+      });
+
+      // Show a snackbar to indicate success
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Bid placed successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      print('Error placing bid: $e');
+      // Show a snackbar to indicate failure
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to place bid'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   void _removeInterestedData(String documentID) async {
     try {
       String collectionName = 'interested_data_$_name';
-      await FirebaseFirestore.instance.collection(collectionName).doc(documentID).delete();
+      await FirebaseFirestore.instance
+          .collection(collectionName)
+          .doc(documentID)
+          .delete();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Data removed from interested'),
@@ -587,7 +629,8 @@ void _submitBid(Map<String, dynamic> data, String price) async {
     }
   }
 
-  void _logout(BuildContext context) {
+  void _logout(BuildContext context) async {
+    // Show confirmation dialog
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -597,13 +640,21 @@ void _submitBid(Map<String, dynamic> data, String price) async {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Dismiss the dialog
               },
               child: Text("No"),
             ),
             TextButton(
-              onPressed: () {
-                // Perform logout operation
+              onPressed: () async {
+                // Clear shared preferences
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                await prefs.clear();
+
+                setState(() {
+                _name = '';
+              });
+
+                // Perform logout operation and navigate to login page
                 Navigator.pushNamedAndRemoveUntil(
                     context, '/', (route) => false);
               },
