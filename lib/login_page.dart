@@ -84,7 +84,7 @@ class _LoginPageState extends State<LoginPage>
               controller: _tabController,
               indicatorColor: Color.fromARGB(255, 22, 82, 8),
               tabs: [
-                Tab(text: 'Agent'),
+                Tab(text: 'Navin Maharaj'),
                 Tab(text: 'Wholesaler'),
               ],
             ),
@@ -172,8 +172,8 @@ class _LoginPageState extends State<LoginPage>
               if (_agentFormKey.currentState!.validate()) {
                 final email = _agentEmailController.text.trim();
                 final password = _agentPasswordController.text.trim();
-                if (email == 'priyankviradiya227@gmail.com' &&
-                    password == 'Pri@2004') {
+                if (email == 'pavanjnd@gmail.com' &&
+                    password == '@#1982@1') {
                   SharedPreferences prefs =
                       await SharedPreferences.getInstance();
                   prefs.setBool('agentLoggedIn', true);

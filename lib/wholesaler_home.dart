@@ -102,7 +102,7 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
               ),
             ),
             ListTile(
-              title: Text('Data'),
+              title: Text('Item List'),
               onTap: () {
                 setState(() {
                   _currentPage = "Data";
@@ -111,7 +111,7 @@ class _WholesalerHomePageState extends State<WholesalerHomePage> {
               },
             ),
             ListTile(
-              title: Text('Interested Data'),
+              title: Text('Confirm Order'),
               onTap: () {
                 setState(() {
                   _currentPage = 'Interested Data';

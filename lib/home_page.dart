@@ -77,7 +77,7 @@ void _clearPreferencesAndNavigateToLogin() async {
                 color: Color.fromARGB(255, 22, 82, 8),
               ),
               child: Text(
-                'Welcome, Agent!',
+                'Welcome, Navin Maharaj',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -96,7 +96,7 @@ void _clearPreferencesAndNavigateToLogin() async {
             ),
             ListTile(
               leading: Icon(Icons.money),
-              title: Text('Bid Data'),
+              title: Text('New Orders'),
               onTap: () {
                 setState(() {
                   _selectedIndex = 3;
@@ -106,7 +106,7 @@ void _clearPreferencesAndNavigateToLogin() async {
             ),
             ListTile(
               leading: Icon(Icons.add),
-              title: Text('Add Wholesaler'),
+              title: Text('Add Party'),
               onTap: () {
                 setState(() {
                   _selectedIndex = 1;
@@ -116,7 +116,7 @@ void _clearPreferencesAndNavigateToLogin() async {
             ),
             ListTile(
               leading: Icon(Icons.add),
-              title: Text('Add Data'),
+              title: Text('Add Item'),
               onTap: () {
                 setState(() {
                   _selectedIndex = 2;
