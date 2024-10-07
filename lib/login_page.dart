@@ -43,7 +43,7 @@ class _LoginPageState extends State<LoginPage>
   if (agentLoggedIn) {
     // Navigate to agent home page
     Navigator.pushReplacement(
-      context,
+      context, 
       MaterialPageRoute(builder: (context) => AgentHomePage()),
     );
   } else if (wholesalerLoggedIn) {
